@@ -65,7 +65,7 @@
 /******/ 	}
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "85675225cf9e57d886fd"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "a74d041ddd44f5ec74d3"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 /******/ 	
@@ -12839,7 +12839,7 @@
 	  }
 	  addSketchConnections(geom.constructionSegments, this.SKETCH_CONSTRUCTION_MATERIAL);
 	  addSketchConnections(geom.connections, this.SKETCH_MATERIAL);
-	  addSketchConnections(geom.loops, this.SKETCH_MATERIAL);
+	  addSketchConnections((0, _cadUtils.arrFlatten1L)(geom.loops), this.SKETCH_MATERIAL);
 	
 	  var _iteratorNormalCompletion = true;
 	  var _didIteratorError = false;
@@ -12868,7 +12868,6 @@
 	};
 	
 	SketchFace.prototype.findById = function (sketchObjectId) {
-	  if (!this.sketch3DGroup) return undefined;
 	  return this.sketch3DGroup.children.find(function (o) {
 	    return o.__TCAD_SketchObject && o.__TCAD_SketchObject.id == sketchObjectId;
 	  });
