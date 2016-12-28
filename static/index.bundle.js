@@ -65,7 +65,7 @@
 /******/ 	}
 /******/ 	
 /******/ 	var hotApplyOnUpdate = true;
-/******/ 	var hotCurrentHash = "04016b2a87acce86ce13"; // eslint-disable-line no-unused-vars
+/******/ 	var hotCurrentHash = "1d19dcd8030284202861"; // eslint-disable-line no-unused-vars
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentParents = []; // eslint-disable-line no-unused-vars
 /******/ 	
@@ -9763,11 +9763,9 @@
 	
 	var _actions = __webpack_require__(77);
 	
-	var _coreActions = __webpack_require__(78);
+	var _allActions = __webpack_require__(78);
 	
-	var CoreActions = _interopRequireWildcard(_coreActions);
-	
-	var _operationActions = __webpack_require__(80);
+	var AllActions = _interopRequireWildcard(_allActions);
 	
 	var _vector = __webpack_require__(8);
 	
@@ -9787,13 +9785,13 @@
 	
 	var math = _interopRequireWildcard(_math);
 	
-	var _io = __webpack_require__(81);
+	var _io = __webpack_require__(83);
 	
-	var _debug = __webpack_require__(119);
+	var _debug = __webpack_require__(121);
 	
-	var _sample = __webpack_require__(120);
+	var _sample = __webpack_require__(122);
 	
-	__webpack_require__(121);
+	__webpack_require__(123);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -9806,8 +9804,7 @@
 	  this.inputManager = new _inputManager.InputManager(this);
 	  this.state = this.createState();
 	  this.viewer = new _viewer.Viewer(this.bus, document.getElementById('viewer-container'));
-	  this.actionManager.registerActions(CoreActions);
-	  this.actionManager.registerActions(_operationActions.OperationActions);
+	  this.actionManager.registerActions(AllActions);
 	  this.tabSwitcher = new _tabSwitcher2.default($('#tab-switcher'), $('#view-3d'));
 	  this.controlBar = new _controlBar2.default(this, $('#control-bar'));
 	
@@ -9941,11 +9938,15 @@
 	  return App.STORAGE_PREFIX + this.id;
 	};
 	
-	App.prototype.sketchFace = function () {
+	App.prototype.sketchSelectedFace = function () {
 	  if (this.viewer.selectionMgr.selection.length == 0) {
 	    return;
 	  }
 	  var polyFace = this.viewer.selectionMgr.selection[0];
+	  this.sketchFace(polyFace);
+	};
+	
+	App.prototype.sketchFace = function (polyFace) {
 	  var faceStorageKey = this.faceStorageKey(polyFace.id);
 	
 	  var savedFace = localStorage.getItem(faceStorageKey);
@@ -10257,10 +10258,10 @@
 	  };
 	}
 	
-	function Box() {
+	function Box(parent) {
 	  this.root = this.content = $('<div class="tc-box" />');
 	  this.root.addClass('tc-box tc-scroll');
-	  this.root.appendTo('body');
+	  this.root.appendTo(parent ? parent : 'body');
 	}
 	
 	Box.prototype.close = function () {
@@ -13733,6 +13734,17 @@
 	  });
 	}
 	
+	Craft.prototype.remove = function (modificationIndex) {
+	  var history = this.history;
+	  history.splice(modificationIndex, history.length - modificationIndex);
+	
+	  if (this.historyPointer >= history.length) {
+	    this.finishHistoryEditing();
+	  } else {
+	    this.app.bus.notify('historyShrink');
+	  }
+	};
+	
 	Craft.prototype.loadHistory = function (history) {
 	  this.history = history;
 	  this._historyPointer = history.length;
@@ -14807,10 +14819,15 @@
 	
 	var AbstractSelectionManager = function () {
 	  function AbstractSelectionManager(viewer) {
+	    var _this = this;
+	
 	    _classCallCheck(this, AbstractSelectionManager);
 	
 	    this.viewer = viewer;
 	    this.selection = [];
+	    this.viewer.bus.subscribe('craft', function () {
+	      return _this.deselectAll();
+	    });
 	  }
 	
 	  _createClass(AbstractSelectionManager, [{
@@ -14832,6 +14849,11 @@
 	    value: function select() {
 	      throw "AbstractFunctionCall";
 	    }
+	  }, {
+	    key: 'deselectAll',
+	    value: function deselectAll() {
+	      throw "AbstractFunctionCall";
+	    }
 	  }]);
 	
 	  return AbstractSelectionManager;
@@ -14843,11 +14865,11 @@
 	  function SketchSelectionManager(viewer, selectionMaterial) {
 	    _classCallCheck(this, SketchSelectionManager);
 	
-	    var _this = _possibleConstructorReturn(this, (SketchSelectionManager.__proto__ || Object.getPrototypeOf(SketchSelectionManager)).call(this, viewer));
+	    var _this2 = _possibleConstructorReturn(this, (SketchSelectionManager.__proto__ || Object.getPrototypeOf(SketchSelectionManager)).call(this, viewer));
 	
-	    _this.selectionMaterial = selectionMaterial;
-	    _this.defaultMaterials = [];
-	    return _this;
+	    _this2.selectionMaterial = selectionMaterial;
+	    _this2.defaultMaterials = [];
+	    return _this2;
 	  }
 	
 	  _createClass(SketchSelectionManager, [{
@@ -14859,6 +14881,11 @@
 	      line.material = this.selectionMaterial;
 	      this.notify();
 	      this.viewer.render();
+	    }
+	  }, {
+	    key: 'deselectAll',
+	    value: function deselectAll() {
+	      this.clear();
 	    }
 	  }, {
 	    key: 'clear',
@@ -14892,14 +14919,14 @@
 	  function SelectionManager(viewer, selectionColor, readOnlyColor, defaultColor) {
 	    _classCallCheck(this, SelectionManager);
 	
-	    var _this2 = _possibleConstructorReturn(this, (SelectionManager.__proto__ || Object.getPrototypeOf(SelectionManager)).call(this, viewer));
+	    var _this3 = _possibleConstructorReturn(this, (SelectionManager.__proto__ || Object.getPrototypeOf(SelectionManager)).call(this, viewer));
 	
-	    _this2.selectionColor = selectionColor;
-	    _this2.defaultColor = defaultColor;
-	    _this2.readOnlyColor = readOnlyColor;
-	    _this2.planeSelection = [];
+	    _this3.selectionColor = selectionColor;
+	    _this3.defaultColor = defaultColor;
+	    _this3.readOnlyColor = readOnlyColor;
+	    _this3.planeSelection = [];
 	
-	    _this2.basisGroup = new THREE.Object3D();
+	    _this3.basisGroup = new THREE.Object3D();
 	    var length = 200;
 	    var arrowLength = length * 0.2;
 	    var arrowHead = arrowLength * 0.4;
@@ -14920,9 +14947,9 @@
 	
 	    var xAxis = createArrow(new THREE.Vector3(1, 0, 0), 0xFF0000);
 	    var yAxis = createArrow(new THREE.Vector3(0, 1, 0), 0x00FF00);
-	    _this2.basisGroup.add(xAxis);
-	    _this2.basisGroup.add(yAxis);
-	    return _this2;
+	    _this3.basisGroup.add(xAxis);
+	    _this3.basisGroup.add(yAxis);
+	    return _this3;
 	  }
 	
 	  _createClass(SelectionManager, [{
@@ -15216,6 +15243,12 @@
 	  };
 	
 	  wizard.focus();
+	  if (this.registeredWizard != undefined) {
+	    if (!this.registeredWizard.disposed) {
+	      this.registeredWizard.dispose();
+	    }
+	  }
+	  this.registeredWizard = wizard;
 	  return wizard;
 	};
 	
@@ -16687,7 +16720,7 @@
 	var Handlebars = __webpack_require__(35);
 	function __default(obj) { return obj && (obj.__esModule ? obj["default"] : obj); }
 	module.exports = (Handlebars["default"] || Handlebars).template({"compiler":[7,">= 4.0.0"],"main":function(container,depth0,helpers,partials,data) {
-	    return "<div class=\"tc-folder\">\n  <div class=\"tc-row tc-title\">Modifications</div>\n  <div class=\"tc-list\" data-bind-list=\"modifications\">\n    <div class=\"tc-row tc-pseudo-btn modification-item\" data-bind=\"info\"></div>\n  </div>\n  <div class=\"tc-row tc-ctrl tc-buttons-block\">\n    <span class=\"tc-block-btn active-btn\">Finish History Editing</span>\n  </div>\n</div>\n";
+	    return "<div class=\"tc-folder\">\n  <div class=\"tc-row tc-title\">Modifications</div>\n  <div class=\"tc-list\" data-bind-list=\"modifications\">\n    <div class=\"tc-row tc-pseudo-btn modification-item context-hover action-item\" data-action=\"SetHistoryPointer\" data-bind=\"@data-modification: id\">\n      <span data-bind=\"info\" style=\"float: left\"></span>\n      <span style=\"float: right\" class=\"modification-right-buttons\">\n        <i class=\"fa fa-edit modification-button action-item\" data-action=\"OpenHistoryWizard\"></i>\n        <i class=\"fa fa-image modification-button action-item require-face\" data-action=\"EditOperationSketch\"></i>\n        <i class=\"fa fa-remove modification-button action-item danger\" data-action=\"RemoveModification\"></i>\n      </span>\n    </div>\n  </div>\n  <div class=\"tc-row tc-ctrl tc-buttons-block\">\n    <span class=\"tc-block-btn active-btn\">Finish History Editing</span>\n  </div>\n</div>\n";
 	},"useData":true});
 
 /***/ },
@@ -17167,7 +17200,7 @@
 	  this.viewer = viewer;
 	  this.disposed = false;
 	  this.ui = {
-	    box: new tk.Box(),
+	    box: new tk.Box($('#view-3d')),
 	    folder: new tk.Folder(this.title())
 	  };
 	  tk.add(this.ui.box, this.ui.folder);
@@ -18312,6 +18345,7 @@
 	      var formattedValue = format(def.formatters, value);
 	      binder.apply(node, formattedValue, policy, def.key);
 	    });
+	    binder.init(node);
 	  });
 	}
 	
@@ -18323,10 +18357,6 @@
 	    var bindingsDefinition = node.attr('data-bind');
 	    if (bindingsDefinition) {
 	      setupBindings(scope.bindings, bindingsDefinition, node);
-	      var template = node.text();
-	      if (template) {
-	        node.attr('data-bind-template', template);
-	      }
 	    }
 	    node.children().each(function (i, e) {
 	      return queue.push($(e));
@@ -18484,6 +18514,12 @@
 	    } else {
 	      node.show();
 	    }
+	  },
+	  init: function init(node) {
+	    var template = node.text();
+	    if (template) {
+	      node.attr('data-bind-template', template);
+	    }
 	  }
 	};
 	
@@ -18491,17 +18527,20 @@
 	  prefix: '@',
 	  apply: function apply(node, value, policy, key) {
 	    return node.attr(key, value);
-	  }
+	  },
+	  init: function init(node) {}
 	}, {
 	  prefix: '$',
 	  apply: function apply(node, value, policy, key) {
 	    return node.css(key, value);
-	  }
+	  },
+	  init: function init(node) {}
 	}, {
 	  prefix: '!',
 	  apply: function apply(node, value, policy, key) {
 	    return value ? node.addClass(key) : node.removeClass(key);
-	  }
+	  },
+	  init: function init(node) {}
 	}, DEFAULT_BINDER];
 	
 	function Scope() {
@@ -18867,28 +18906,12 @@
 	  this.historyWizard = null;
 	
 	  this.app.bus.subscribe("craft", function () {
-	    var modifications = [];
-	
-	    var _loop = function _loop(i) {
-	      var op = _this.app.craft.history[i];
-	      var m = {
-	        id: i,
-	        info: _this.app.ui.getInfoForOp(op),
-	        OnBind: function OnBind(dom, data) {
-	          dom.css('background-image', 'url(' + getIconForOp(op) + ')');
-	          dom.click(function () {
-	            return _this.app.craft.historyPointer = data.id;
-	          });
-	        }
-	      };
-	      modifications.push(m);
-	    };
-	
-	    for (var i = 0; i < _this.app.craft.history.length; i++) {
-	      _loop(i);
-	    }
-	    (0, _bind.Bind)(_this.dom, { modifications: modifications });
+	    _this.updateList();
 	    _this.updateHistoryPointer();
+	  });
+	
+	  this.app.bus.subscribe("historyShrink", function () {
+	    _this.updateList();
 	  });
 	
 	  this.app.bus.subscribe("refreshSketch", function () {
@@ -18903,6 +18926,32 @@
 	
 	  (0, _bind.Bind)(this.dom, {});
 	}
+	
+	ModificationsPanel.prototype.updateList = function () {
+	  var _this2 = this;
+	
+	  var modifications = [];
+	
+	  var _loop = function _loop(i) {
+	    var op = _this2.app.craft.history[i];
+	    var m = {
+	      id: i,
+	      info: _this2.app.ui.getInfoForOp(op),
+	      OnBind: function OnBind(dom, data) {
+	        dom.css('background-image', 'url(' + getIconForOp(op) + ')');
+	        if (!op.face) {
+	          dom.find('.require-face').addClass('action-disabled');
+	        }
+	      }
+	    };
+	    modifications.push(m);
+	  };
+	
+	  for (var i = 0; i < this.app.craft.history.length; i++) {
+	    _loop(i);
+	  }
+	  (0, _bind.Bind)(this.dom, { modifications: modifications });
+	};
 	
 	ModificationsPanel.prototype.updateHistoryPointer = function () {
 	  if (this.historyWizard != null) {
@@ -19219,6 +19268,7 @@
 	    this.clear();
 	    _utils.EventData.set(event, 'initiator', target);
 	    this.app.actionManager.run(action, event);
+	    event.stopPropagation();
 	  }
 	};
 	
@@ -19968,9 +20018,55 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	
+	var _coreActions = __webpack_require__(79);
+	
+	Object.keys(_coreActions).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _coreActions[key];
+	    }
+	  });
+	});
+	
+	var _operationActions = __webpack_require__(81);
+	
+	Object.keys(_operationActions).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _operationActions[key];
+	    }
+	  });
+	});
+	
+	var _historyActions = __webpack_require__(82);
+	
+	Object.keys(_historyActions).forEach(function (key) {
+	  if (key === "default" || key === "__esModule") return;
+	  Object.defineProperty(exports, key, {
+	    enumerable: true,
+	    get: function get() {
+	      return _historyActions[key];
+	    }
+	  });
+	});
+
+/***/ },
+/* 79 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
 	exports.noIcon = exports.LookAtSolid = exports.ShowSketches = exports.GitHub = exports.Donate = exports.Info = exports.DeselectAll = exports.RefreshSketches = exports.StlExport = exports.Save = exports.EditFace = undefined;
 	
-	var _actionHelpers = __webpack_require__(79);
+	var _actionHelpers = __webpack_require__(80);
 	
 	var ActionHelpers = _interopRequireWildcard(_actionHelpers);
 	
@@ -19978,13 +20074,13 @@
 	
 	var EditFace = exports.EditFace = {
 	  cssIcons: ['file-picture-o'],
-	  label: 'edit sketch',
+	  label: 'sketch',
 	  icon96: 'img/3d/face-edit96.png',
 	  info: 'open sketcher for a face/plane',
 	  listens: ['selection'],
 	  update: ActionHelpers.checkForSelectedFaces(1),
 	  invoke: function invoke(app) {
-	    return app.sketchFace();
+	    return app.sketchSelectedFace();
 	  }
 	};
 	
@@ -20073,7 +20169,7 @@
 	};
 
 /***/ },
-/* 79 */
+/* 80 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20102,7 +20198,7 @@
 	}
 
 /***/ },
-/* 80 */
+/* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20110,13 +20206,13 @@
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.OperationActions = undefined;
+	exports.IMPORT_STL = exports.UNION = exports.DIFFERENCE = exports.INTERSECTION = exports.SPHERE = exports.PLANE = exports.BOX = exports.SHELL = exports.REVOLVE = exports.PAD = exports.CUT = undefined;
 	
 	var _operations = __webpack_require__(57);
 	
 	var Operations = _interopRequireWildcard(_operations);
 	
-	var _actionHelpers = __webpack_require__(79);
+	var _actionHelpers = __webpack_require__(80);
 	
 	var ActionHelpers = _interopRequireWildcard(_actionHelpers);
 	
@@ -20133,60 +20229,57 @@
 	  return action;
 	}
 	
-	var OperationActions = exports.OperationActions = {
+	var CUT = exports.CUT = mergeInfo('CUT', {
+	  info: 'makes a cut based on 2D sketch'
+	});
 	
-	  'CUT': mergeInfo('CUT', {
-	    info: 'makes a cut based on 2D sketch'
-	  }),
+	var PAD = exports.PAD = mergeInfo('PAD', {
+	  info: 'extrudes 2D sketch'
+	});
 	
-	  'PAD': mergeInfo('PAD', {
-	    info: 'extrudes 2D sketch'
-	  }),
+	var REVOLVE = exports.REVOLVE = mergeInfo('REVOLVE', {
+	  info: 'revolve 2D sketch'
+	});
 	
-	  'REVOLVE': mergeInfo('REVOLVE', {
-	    info: 'revolve 2D sketch'
-	  }),
+	var SHELL = exports.SHELL = mergeInfo('SHELL', {
+	  info: 'makes shell using borders'
+	});
 	
-	  'SHELL': mergeInfo('SHELL', {
-	    info: 'makes shell using borders'
-	  }),
+	var BOX = exports.BOX = mergeInfo('BOX', {
+	  info: 'creates new object box'
+	});
 	
-	  'BOX': mergeInfo('BOX', {
-	    info: 'creates new object box'
-	  }),
+	var PLANE = exports.PLANE = mergeInfo('PLANE', {
+	  info: 'creates new object plane'
+	});
 	
-	  'PLANE': mergeInfo('PLANE', {
-	    info: 'creates new object plane'
-	  }),
+	var SPHERE = exports.SPHERE = mergeInfo('SPHERE', {
+	  info: 'creates new object sphere'
+	});
 	
-	  'SPHERE': mergeInfo('SPHERE', {
-	    info: 'creates new object sphere'
-	  }),
+	var INTERSECTION = exports.INTERSECTION = mergeInfo('INTERSECTION', {
+	  info: 'intersection operation on two solids'
+	});
 	
-	  'INTERSECTION': mergeInfo('INTERSECTION', {
-	    info: 'intersection operation on two solids'
-	  }),
+	var DIFFERENCE = exports.DIFFERENCE = mergeInfo('DIFFERENCE', {
+	  info: 'difference operation on two solids'
+	});
 	
-	  'DIFFERENCE': mergeInfo('DIFFERENCE', {
-	    info: 'difference operation on two solids'
-	  }),
+	var UNION = exports.UNION = mergeInfo('UNION', {
+	  info: 'union operation on two solids'
+	});
 	
-	  'UNION': mergeInfo('UNION', {
-	    info: 'union operation on two solids'
-	  }),
+	var IMPORT_STL = exports.IMPORT_STL = mergeInfo('IMPORT_STL', {
+	  info: 'import stl from external location'
+	});
 	
-	  'IMPORT_STL': mergeInfo('IMPORT_STL', {
-	    info: 'import stl from external location'
-	  })
-	};
+	requiresFaceSelection(CUT, 1);
+	requiresFaceSelection(PAD, 1);
+	requiresFaceSelection(REVOLVE, 1);
 	
-	requiresFaceSelection(OperationActions.CUT, 1);
-	requiresFaceSelection(OperationActions.PAD, 1);
-	requiresFaceSelection(OperationActions.REVOLVE, 1);
-	
-	requiresSolidSelection(OperationActions.INTERSECTION, 2);
-	requiresSolidSelection(OperationActions.DIFFERENCE, 2);
-	requiresSolidSelection(OperationActions.UNION, 2);
+	requiresSolidSelection(INTERSECTION, 2);
+	requiresSolidSelection(DIFFERENCE, 2);
+	requiresSolidSelection(UNION, 2);
 	
 	function requiresFaceSelection(action, amount) {
 	  action.listens = ['selection'];
@@ -20199,7 +20292,74 @@
 	}
 
 /***/ },
-/* 81 */
+/* 82 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	var SetHistoryPointer = exports.SetHistoryPointer = {
+	  label: 'set history',
+	  info: 'set history pointer to this modification item',
+	  invoke: function invoke(app) {
+	    var mIndex = parseInt(modificationIndex(app));
+	    app.craft.historyPointer = mIndex;
+	  }
+	};
+	
+	var OpenHistoryWizard = exports.OpenHistoryWizard = {
+	  label: 'edit operation',
+	  info: 'open wizard to change parameters of this operation',
+	  invoke: function invoke(app) {
+	    var mIndex = parseInt(modificationIndex(app));
+	    if (mIndex != app.craft.historyPointer) {
+	      app.craft.historyPointer = mIndex;
+	    } else {
+	      var modification = app.craft.history[mIndex];
+	      app.ui.createWizardForOperation(modification);
+	    }
+	  }
+	};
+	
+	var EditOperationSketch = exports.EditOperationSketch = {
+	  cssIcons: ['image'],
+	  label: 'sketch',
+	  info: 'edit the sketch assigned to this operation',
+	  invoke: function invoke(app) {
+	
+	    var mIndex = parseInt(modificationIndex(app));
+	    var modification = app.craft.history[mIndex];
+	    if (!modification.face) {
+	      return;
+	    }
+	    if (mIndex != app.craft.historyPointer) {
+	      app.craft.historyPointer = mIndex;
+	    }
+	    var face = app.findFace(modification.face);
+	    app.sketchFace(face);
+	  }
+	};
+	
+	var RemoveModification = exports.RemoveModification = {
+	  label: 'remove modification',
+	  info: 'remove this modification',
+	  invoke: function invoke(app) {
+	    if (!confirm("This modification and all following modifications will be removed. Continue?")) {
+	      return;
+	    }
+	    var mIndex = parseInt(modificationIndex(app));
+	    app.craft.remove(mIndex);
+	  }
+	};
+	
+	function modificationIndex(app) {
+	  return app.inputManager.context.data('modification');
+	}
+
+/***/ },
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20209,29 +20369,29 @@
 	});
 	exports.Types = exports.BBox = exports.IO = undefined;
 	
-	var _idGenerator = __webpack_require__(82);
+	var _idGenerator = __webpack_require__(84);
 	
-	var _viewer2d = __webpack_require__(83);
+	var _viewer2d = __webpack_require__(85);
 	
-	var _styles = __webpack_require__(84);
+	var _styles = __webpack_require__(86);
 	
-	var _arc = __webpack_require__(115);
+	var _arc = __webpack_require__(117);
 	
-	var _point = __webpack_require__(100);
+	var _point = __webpack_require__(102);
 	
-	var _segment = __webpack_require__(111);
+	var _segment = __webpack_require__(113);
 	
-	var _circle = __webpack_require__(107);
+	var _circle = __webpack_require__(109);
 	
-	var _ellipse = __webpack_require__(105);
+	var _ellipse = __webpack_require__(107);
 	
-	var _ellipticalArc = __webpack_require__(106);
+	var _ellipticalArc = __webpack_require__(108);
 	
-	var _bezierCurve = __webpack_require__(116);
+	var _bezierCurve = __webpack_require__(118);
 	
-	var _dim = __webpack_require__(118);
+	var _dim = __webpack_require__(120);
 	
-	var _parametric = __webpack_require__(85);
+	var _parametric = __webpack_require__(87);
 	
 	var _vector = __webpack_require__(8);
 	
@@ -20958,7 +21118,7 @@
 	exports.Types = Types;
 
 /***/ },
-/* 82 */
+/* 84 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -20980,7 +21140,7 @@
 	};
 
 /***/ },
-/* 83 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -20990,37 +21150,37 @@
 	});
 	exports.Styles = exports.Layer = exports.Viewer = undefined;
 	
-	var _idGenerator = __webpack_require__(82);
+	var _idGenerator = __webpack_require__(84);
 	
-	var _styles = __webpack_require__(84);
+	var _styles = __webpack_require__(86);
 	
 	var _toolkit = __webpack_require__(5);
 	
-	var _parametric = __webpack_require__(85);
+	var _parametric = __webpack_require__(87);
 	
-	var _history = __webpack_require__(95);
+	var _history = __webpack_require__(97);
 	
-	var _manager = __webpack_require__(97);
+	var _manager = __webpack_require__(99);
 	
-	var _pan = __webpack_require__(98);
+	var _pan = __webpack_require__(100);
 	
-	var _drag = __webpack_require__(109);
+	var _drag = __webpack_require__(111);
 	
-	var _segment = __webpack_require__(111);
+	var _segment = __webpack_require__(113);
 	
-	var _point = __webpack_require__(100);
+	var _point = __webpack_require__(102);
 	
-	var _primitives = __webpack_require__(112);
+	var _primitives = __webpack_require__(114);
 	
-	var _referencePoint = __webpack_require__(113);
+	var _referencePoint = __webpack_require__(115);
 	
-	var _basisOrigin = __webpack_require__(114);
+	var _basisOrigin = __webpack_require__(116);
 	
 	var _vector = __webpack_require__(8);
 	
 	var _vector2 = _interopRequireDefault(_vector);
 	
-	var _drawUtils = __webpack_require__(103);
+	var _drawUtils = __webpack_require__(105);
 	
 	var draw_utils = _interopRequireWildcard(_drawUtils);
 	
@@ -21639,7 +21799,7 @@
 	exports.Styles = _styles.Styles;
 
 /***/ },
-/* 84 */
+/* 86 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -21698,7 +21858,7 @@
 	};
 
 /***/ },
-/* 85 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21708,15 +21868,15 @@
 	});
 	exports.ParametricManager = exports.Constraints = undefined;
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	var utils = _interopRequireWildcard(_utils);
 	
-	var _ref = __webpack_require__(87);
+	var _ref = __webpack_require__(89);
 	
-	var _solver = __webpack_require__(88);
+	var _solver = __webpack_require__(90);
 	
-	var _constraints = __webpack_require__(91);
+	var _constraints = __webpack_require__(93);
 	
 	var _vector = __webpack_require__(8);
 	
@@ -21726,7 +21886,7 @@
 	
 	var math = _interopRequireWildcard(_math);
 	
-	var _fetchers = __webpack_require__(94);
+	var _fetchers = __webpack_require__(96);
 	
 	var fetch = _interopRequireWildcard(_fetchers);
 	
@@ -23376,7 +23536,7 @@
 	exports.ParametricManager = ParametricManager;
 
 /***/ },
-/* 86 */
+/* 88 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -23432,7 +23592,7 @@
 	}
 
 /***/ },
-/* 87 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23442,7 +23602,7 @@
 	});
 	exports.Ref = Ref;
 	
-	var _idGenerator = __webpack_require__(82);
+	var _idGenerator = __webpack_require__(84);
 	
 	function Ref(value) {
 	  this.id = _idGenerator.Generator.genID();
@@ -23458,7 +23618,7 @@
 	};
 
 /***/ },
-/* 88 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23468,7 +23628,7 @@
 	});
 	exports.prepare = exports.Param = undefined;
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	var utils = _interopRequireWildcard(_utils);
 	
@@ -23476,17 +23636,17 @@
 	
 	var math = _interopRequireWildcard(_math);
 	
-	var _qr = __webpack_require__(89);
+	var _qr = __webpack_require__(91);
 	
 	var _qr2 = _interopRequireDefault(_qr);
 	
-	var _lm = __webpack_require__(90);
+	var _lm = __webpack_require__(92);
 	
 	var _lm2 = _interopRequireDefault(_lm);
 	
-	var _constraints = __webpack_require__(91);
+	var _constraints = __webpack_require__(93);
 	
-	var _optim = __webpack_require__(92);
+	var _optim = __webpack_require__(94);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -23804,7 +23964,7 @@
 	exports.prepare = prepare;
 
 /***/ },
-/* 89 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -23813,7 +23973,7 @@
 	  value: true
 	});
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	var _math = __webpack_require__(9);
 	
@@ -24037,7 +24197,7 @@
 	exports.default = QR;
 
 /***/ },
-/* 90 */
+/* 92 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -25075,7 +25235,7 @@
 	}
 
 /***/ },
-/* 91 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -25085,7 +25245,7 @@
 	});
 	exports.ConstantWrapper = exports.EqualsTo = exports.createByConstraintName = undefined;
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	/**
 	 * This intermediate layer should be eliminated since constraint server isn't used anymore
@@ -25767,7 +25927,7 @@
 	exports.ConstantWrapper = ConstantWrapper;
 
 /***/ },
-/* 92 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -25777,7 +25937,7 @@
 	});
 	exports.optim = exports.dog_leg = undefined;
 	
-	var _numeric = __webpack_require__(93);
+	var _numeric = __webpack_require__(95);
 	
 	var _numeric2 = _interopRequireDefault(_numeric);
 	
@@ -26396,7 +26556,7 @@
 	exports.optim = optim;
 
 /***/ },
-/* 93 */
+/* 95 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {"use strict";
@@ -30827,7 +30987,7 @@
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 94 */
+/* 96 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -30990,7 +31150,7 @@
 	}
 
 /***/ },
-/* 95 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -31000,7 +31160,7 @@
 	});
 	exports.HistoryManager = undefined;
 	
-	var _diffMatchPatch = __webpack_require__(96);
+	var _diffMatchPatch = __webpack_require__(98);
 	
 	var _diffMatchPatch2 = _interopRequireDefault(_diffMatchPatch);
 	
@@ -31124,7 +31284,7 @@
 	exports.HistoryManager = HistoryManager;
 
 /***/ },
-/* 96 */
+/* 98 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -33323,7 +33483,7 @@
 
 
 /***/ },
-/* 97 */
+/* 99 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -33423,7 +33583,7 @@
 	}();
 
 /***/ },
-/* 98 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33435,9 +33595,9 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _tool = __webpack_require__(99);
+	var _tool = __webpack_require__(101);
 	
-	var _editToolsMap = __webpack_require__(104);
+	var _editToolsMap = __webpack_require__(106);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -33572,7 +33732,7 @@
 	}(_tool.Tool);
 
 /***/ },
-/* 99 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33584,7 +33744,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _point = __webpack_require__(100);
+	var _point = __webpack_require__(102);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -33747,7 +33907,7 @@
 	};
 
 /***/ },
-/* 100 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33759,11 +33919,11 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
-	var _drawUtils = __webpack_require__(103);
+	var _drawUtils = __webpack_require__(105);
 	
-	var _idGenerator = __webpack_require__(82);
+	var _idGenerator = __webpack_require__(84);
 	
 	var _vector = __webpack_require__(8);
 	
@@ -33878,7 +34038,7 @@
 	}();
 
 /***/ },
-/* 101 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -33890,9 +34050,9 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _idGenerator = __webpack_require__(82);
+	var _idGenerator = __webpack_require__(84);
 	
-	var _shape = __webpack_require__(102);
+	var _shape = __webpack_require__(104);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -34028,7 +34188,7 @@
 	}(_shape.Shape);
 
 /***/ },
-/* 102 */
+/* 104 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -34064,7 +34224,7 @@
 	}();
 
 /***/ },
-/* 103 */
+/* 105 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -34087,7 +34247,7 @@
 	}
 
 /***/ },
-/* 104 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34097,17 +34257,17 @@
 	});
 	exports.GetShapeEditTool = GetShapeEditTool;
 	
-	var _ellipse = __webpack_require__(105);
+	var _ellipse = __webpack_require__(107);
 	
-	var _ellipticalArc = __webpack_require__(106);
+	var _ellipticalArc = __webpack_require__(108);
 	
-	var _circle = __webpack_require__(107);
+	var _circle = __webpack_require__(109);
 	
-	var _circle2 = __webpack_require__(108);
+	var _circle2 = __webpack_require__(110);
 	
-	var _drag = __webpack_require__(109);
+	var _drag = __webpack_require__(111);
 	
-	var _ellipse2 = __webpack_require__(110);
+	var _ellipse2 = __webpack_require__(112);
 	
 	function GetShapeEditTool(viewer, obj, alternative) {
 	  if (obj instanceof _circle.Circle && !alternative) {
@@ -34128,7 +34288,7 @@
 	}
 
 /***/ },
-/* 105 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34140,11 +34300,11 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _ref = __webpack_require__(87);
+	var _ref = __webpack_require__(89);
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
-	var _parametric = __webpack_require__(85);
+	var _parametric = __webpack_require__(87);
 	
 	var _math = __webpack_require__(9);
 	
@@ -34273,7 +34433,7 @@
 	var RECOVER_LENGTH = 100;
 
 /***/ },
-/* 106 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34285,15 +34445,15 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _ellipse = __webpack_require__(105);
+	var _ellipse = __webpack_require__(107);
 	
-	var _parametric = __webpack_require__(85);
+	var _parametric = __webpack_require__(87);
 	
 	var _math = __webpack_require__(9);
 	
 	var math = _interopRequireWildcard(_math);
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -34364,7 +34524,7 @@
 	EllipticalArc.prototype._class = 'TCAD.TWO.EllipticalArc';
 
 /***/ },
-/* 107 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34376,7 +34536,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	var utils = _interopRequireWildcard(_utils);
 	
@@ -34384,13 +34544,13 @@
 	
 	var math = _interopRequireWildcard(_math);
 	
-	var _circle = __webpack_require__(108);
+	var _circle = __webpack_require__(110);
 	
-	var _point = __webpack_require__(100);
+	var _point = __webpack_require__(102);
 	
-	var _ref = __webpack_require__(87);
+	var _ref = __webpack_require__(89);
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -34452,7 +34612,7 @@
 	Circle.prototype._class = 'TCAD.TWO.Circle';
 
 /***/ },
-/* 108 */
+/* 110 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34464,15 +34624,15 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _tool = __webpack_require__(99);
+	var _tool = __webpack_require__(101);
 	
 	var _math = __webpack_require__(9);
 	
 	var math = _interopRequireWildcard(_math);
 	
-	var _point = __webpack_require__(100);
+	var _point = __webpack_require__(102);
 	
-	var _circle = __webpack_require__(107);
+	var _circle = __webpack_require__(109);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -34576,7 +34736,7 @@
 	}(_tool.Tool);
 
 /***/ },
-/* 109 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34588,9 +34748,9 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _tool = __webpack_require__(99);
+	var _tool = __webpack_require__(101);
 	
-	var _optim = __webpack_require__(92);
+	var _optim = __webpack_require__(94);
 	
 	var _math = __webpack_require__(9);
 	
@@ -34771,7 +34931,7 @@
 	DragTool.snapshots = [];
 
 /***/ },
-/* 110 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34783,13 +34943,13 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _tool = __webpack_require__(99);
+	var _tool = __webpack_require__(101);
 	
-	var _point = __webpack_require__(100);
+	var _point = __webpack_require__(102);
 	
-	var _ellipse = __webpack_require__(105);
+	var _ellipse = __webpack_require__(107);
 	
-	var _ellipticalArc = __webpack_require__(106);
+	var _ellipticalArc = __webpack_require__(108);
 	
 	var _vector = __webpack_require__(8);
 	
@@ -34938,7 +35098,7 @@
 	}(_tool.Tool);
 
 /***/ },
-/* 111 */
+/* 113 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -34950,13 +35110,13 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
 	var _vector = __webpack_require__(8);
 	
 	var _vector2 = _interopRequireDefault(_vector);
 	
-	var _parametric = __webpack_require__(85);
+	var _parametric = __webpack_require__(87);
 	
 	var _math = __webpack_require__(9);
 	
@@ -35061,7 +35221,7 @@
 	Segment.prototype._class = 'TCAD.TWO.Segment';
 
 /***/ },
-/* 112 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35073,11 +35233,11 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _drawUtils = __webpack_require__(103);
+	var _drawUtils = __webpack_require__(105);
 	
 	var draw_utils = _interopRequireWildcard(_drawUtils);
 	
-	var _shape = __webpack_require__(102);
+	var _shape = __webpack_require__(104);
 	
 	function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 	
@@ -35113,7 +35273,7 @@
 	}(_shape.Shape);
 
 /***/ },
-/* 113 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35125,7 +35285,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _shape = __webpack_require__(102);
+	var _shape = __webpack_require__(104);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -35168,7 +35328,7 @@
 	}(_shape.Shape);
 
 /***/ },
-/* 114 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35180,7 +35340,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _shape = __webpack_require__(102);
+	var _shape = __webpack_require__(104);
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -35265,7 +35425,7 @@
 	}(_shape.Shape);
 
 /***/ },
-/* 115 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35277,7 +35437,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	var utils = _interopRequireWildcard(_utils);
 	
@@ -35289,11 +35449,11 @@
 	
 	var _vector2 = _interopRequireDefault(_vector);
 	
-	var _ref = __webpack_require__(87);
+	var _ref = __webpack_require__(89);
 	
-	var _parametric = __webpack_require__(85);
+	var _parametric = __webpack_require__(87);
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -35448,7 +35608,7 @@
 	Arc.prototype._class = 'TCAD.TWO.Arc';
 
 /***/ },
-/* 116 */
+/* 118 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35460,17 +35620,17 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _ref = __webpack_require__(87);
+	var _ref = __webpack_require__(89);
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
-	var _segment = __webpack_require__(111);
+	var _segment = __webpack_require__(113);
 	
 	var _bezierCubic = __webpack_require__(17);
 	
-	var _convexHull = __webpack_require__(117);
+	var _convexHull = __webpack_require__(119);
 	
-	var _drawUtils = __webpack_require__(103);
+	var _drawUtils = __webpack_require__(105);
 	
 	var draw_utils = _interopRequireWildcard(_drawUtils);
 	
@@ -35639,7 +35799,7 @@
 	var RECOVER_LENGTH = 100;
 
 /***/ },
-/* 117 */
+/* 119 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -35674,7 +35834,7 @@
 	}
 
 /***/ },
-/* 118 */
+/* 120 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -35686,7 +35846,7 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
-	var _utils = __webpack_require__(86);
+	var _utils = __webpack_require__(88);
 	
 	var utils = _interopRequireWildcard(_utils);
 	
@@ -35698,7 +35858,7 @@
 	
 	var _vector2 = _interopRequireDefault(_vector);
 	
-	var _sketchObject = __webpack_require__(101);
+	var _sketchObject = __webpack_require__(103);
 	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
@@ -36069,7 +36229,7 @@
 	}
 
 /***/ },
-/* 119 */
+/* 121 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -36080,7 +36240,7 @@
 	exports.DEBUG = undefined;
 	exports.AddDebugSupport = AddDebugSupport;
 	
-	var _actionHelpers = __webpack_require__(79);
+	var _actionHelpers = __webpack_require__(80);
 	
 	var DEBUG = exports.DEBUG = false;
 	
@@ -36141,7 +36301,7 @@
 	};
 
 /***/ },
-/* 120 */
+/* 122 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -36160,23 +36320,23 @@
 	}
 
 /***/ },
-/* 121 */
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 	
 	// load the styles
-	var content = __webpack_require__(122);
+	var content = __webpack_require__(124);
 	if(typeof content === 'string') content = [[module.id, content, '']];
 	// add the styles to the DOM
-	var update = __webpack_require__(124)(content, {});
+	var update = __webpack_require__(126)(content, {});
 	if(content.locals) module.exports = content.locals;
 	// Hot Module Replacement
 	if(true) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept(122, function() {
-				var newContent = __webpack_require__(122);
+			module.hot.accept(124, function() {
+				var newContent = __webpack_require__(124);
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -36186,21 +36346,21 @@
 	}
 
 /***/ },
-/* 122 */
+/* 124 */
 /***/ function(module, exports, __webpack_require__) {
 
-	exports = module.exports = __webpack_require__(123)();
+	exports = module.exports = __webpack_require__(125)();
 	// imports
 	
 	
 	// module
-	exports.push([module.id, ".no-selection {\n  user-select: none;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n}\nbody {\n  background-color: #808080;\n  font: 11px 'Lucida Grande', sans-serif;\n}\n.main-font {\n  font: 11px 'Lucida Grande', sans-serif;\n}\n.history-selected,\n.history-selected:hover {\n  background-color: #780000;\n}\n.app-tab-view {\n  position: absolute;\n  top: 0;\n  bottom: 21px;\n  width: 100%;\n}\n#tab-switcher {\n  position: absolute;\n  height: 20px;\n  bottom: 0;\n  background-color: #000;\n  width: 100%;\n  border-top: 1px solid #2c2c2c;\n  color: #eee;\n  text-align: center;\n  user-select: none;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n}\n#tab-switcher .tab {\n  padding: 2px 5px 0 5px;\n  height: 100%;\n  float: left;\n  cursor: pointer;\n  border-right: 1px solid #2c2c2c;\n  color: #aaa;\n}\n#tab-switcher .tab:hover {\n  color: #eee;\n}\n#tab-switcher .tab-selected {\n  background-color: #222;\n  color: #eee;\n}\n.tab .expand:hover {\n  color: green;\n}\n.tab .close:hover {\n  color: red;\n}\n#viewer-container {\n  position: absolute;\n  left: 250px;\n  right: 0;\n  top: 0;\n  bottom: 0;\n}\n#control-bar {\n  position: absolute;\n  left: 250px;\n  right: 0;\n  bottom: 0;\n  height: 20px;\n  background-color: rgba(0, 0, 0, 0.5);\n  color: #ccc;\n}\n#control-bar .left-group {\n  text-align: left;\n  float: left;\n}\n#control-bar .right-group {\n  text-align: right;\n}\n#control-bar .left-group .button {\n  float: left;\n  border-right: 1px solid #2c2c2c;\n}\n#control-bar .right-group .button {\n  float: right;\n  border-left: 1px solid #2c2c2c;\n}\n.button .fa {\n  line-height: 1.5;\n}\n#control-bar .button {\n  padding: 3px 7px 0 5px;\n  height: 100%;\n  vertical-align: baseline;\n  cursor: pointer;\n  user-select: none;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n}\n#control-bar .button:hover {\n  background-color: #555;\n}\n#control-bar .button-selected {\n  background-color: #666;\n}\n#control-bar .button-selected:hover {\n  background-color: #666;\n}\n#right-panel {\n  position: absolute;\n  height: 100%;\n  background-color: #000;\n  width: 250px;\n}\n.aux-win {\n  color: #fff;\n  background-color: rgba(40, 40, 40, 0.95);\n  border: solid 1px #000;\n  border-radius: 3px;\n}\n.menu {\n  position: absolute;\n  color: #fff;\n  background-color: rgba(40, 40, 40, 0.95);\n  border: solid 1px #000;\n  border-radius: 3px;\n  /* this element can't have neither padding nor margin to be properly positioned as menu */\n}\n.menu-container {\n  padding: 5px 0 5px 0;\n}\n.menu-item {\n  padding: 5px 5px 5px 2px;\n  cursor: pointer;\n  text-transform: capitalize;\n  white-space: nowrap;\n}\n.menu-item .menu-text {\n  padding-right: 5px;\n}\n.menu-item:hover {\n  background-color: #0074D9;\n}\n.menu-flat-bottom {\n  border-radius: 3px 3px 0 0;\n}\n.menu-flat-top {\n  border-radius: 0 0 3px 3px;\n}\n.menu-separator {\n  border-top: solid 1px #777;\n}\n.menu-item .fa {\n  margin-left: -16px;\n  padding-right: 3px;\n}\n.menu-item.action-disabled {\n  color: #888;\n}\n.menu-item .action-hotkey-info {\n  float: right;\n  padding-left: 15px;\n  color: #888;\n  font-size: 9px;\n  margin-top: 1px;\n}\n.icon16-left {\n  background-position-y: center;\n  background-position-x: 5px;\n  background-repeat: no-repeat;\n  background-size: 16px 16px;\n  padding-left: 25px;\n}\n.message-sink {\n  display: none;\n  position: absolute;\n  max-width: 400px;\n  padding: 2px 5px 2px 5px;\n  color: #fff;\n  background-color: rgba(40, 40, 40, 0.95);\n  border: solid 1px #000;\n  border-radius: 3px;\n  color: #ccc;\n  white-space: nowrap;\n  z-index: 999;\n}\n.action-info > div {\n  padding: 3px 0 3px 0;\n}\n.action-info-hotkey {\n  text-align: right;\n  font-style: italic;\n  color: #888;\n}\n.action-info-hint {\n  font-style: italic;\n  color: #E1A4A4;\n}\n.solid-list .solid-item {\n  background-image: url('../img/3d/solid32.png');\n}\n.solid-list .sketch-item {\n  padding-left: 50px;\n  background-position-x: 30px;\n  background-image: url('../img/3d/sketch32.png');\n}\n.modification-item {\n  word-wrap: break-word;\n  word-break: break-all;\n}\n", ""]);
+	exports.push([module.id, ".no-selection {\n  user-select: none;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n}\nbody {\n  background-color: #808080;\n  font: 11px 'Lucida Grande', sans-serif;\n}\niframe {\n  border: 0;\n}\n.main-font {\n  font: 11px 'Lucida Grande', sans-serif;\n}\n.history-selected,\n.history-selected:hover {\n  background-color: #780000;\n}\n.app-tab-view {\n  position: absolute;\n  top: 0;\n  bottom: 21px;\n  width: 100%;\n}\n#tab-switcher {\n  position: absolute;\n  height: 20px;\n  bottom: 0;\n  background-color: #000;\n  width: 100%;\n  border-top: 1px solid #2c2c2c;\n  color: #eee;\n  text-align: center;\n  user-select: none;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n}\n#tab-switcher .tab {\n  padding: 2px 5px 0 5px;\n  height: 100%;\n  float: left;\n  cursor: pointer;\n  border-right: 1px solid #2c2c2c;\n  color: #aaa;\n}\n#tab-switcher .tab:hover {\n  color: #eee;\n}\n#tab-switcher .tab-selected {\n  background-color: #222;\n  color: #eee;\n}\n.tab .expand:hover {\n  color: green;\n}\n.tab .close:hover {\n  color: red;\n}\n#viewer-container {\n  position: absolute;\n  left: 250px;\n  right: 0;\n  top: 0;\n  bottom: 0;\n}\n#control-bar {\n  position: absolute;\n  left: 250px;\n  right: 0;\n  bottom: 0;\n  height: 20px;\n  background-color: rgba(0, 0, 0, 0.5);\n  color: #ccc;\n}\n#control-bar .left-group {\n  text-align: left;\n  float: left;\n}\n#control-bar .right-group {\n  text-align: right;\n}\n#control-bar .left-group .button {\n  float: left;\n  border-right: 1px solid #2c2c2c;\n}\n#control-bar .right-group .button {\n  float: right;\n  border-left: 1px solid #2c2c2c;\n}\n.button .fa {\n  line-height: 1.5;\n}\n#control-bar .button {\n  padding: 3px 7px 0 5px;\n  height: 100%;\n  vertical-align: baseline;\n  cursor: pointer;\n  user-select: none;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n}\n#control-bar .button:hover {\n  background-color: #555;\n}\n#control-bar .button-selected {\n  background-color: #666;\n}\n#control-bar .button-selected:hover {\n  background-color: #666;\n}\n#right-panel {\n  position: absolute;\n  height: 100%;\n  background-color: #000;\n  width: 250px;\n}\n.aux-win {\n  color: #fff;\n  background-color: rgba(40, 40, 40, 0.95);\n  border: solid 1px #000;\n  border-radius: 3px;\n}\n.menu {\n  position: absolute;\n  color: #fff;\n  background-color: rgba(40, 40, 40, 0.95);\n  border: solid 1px #000;\n  border-radius: 3px;\n  /* this element can't have neither padding nor margin to be properly positioned as menu */\n}\n.menu-container {\n  padding: 5px 0 5px 0;\n}\n.menu-item {\n  padding: 5px 5px 5px 2px;\n  cursor: pointer;\n  text-transform: capitalize;\n  white-space: nowrap;\n}\n.menu-item .menu-text {\n  padding-right: 5px;\n}\n.menu-item:hover {\n  background-color: #0074D9;\n}\n.menu-flat-bottom {\n  border-radius: 3px 3px 0 0;\n}\n.menu-flat-top {\n  border-radius: 0 0 3px 3px;\n}\n.menu-separator {\n  border-top: solid 1px #777;\n}\n.menu-item .fa {\n  margin-left: -16px;\n  padding-right: 3px;\n}\n.action-disabled {\n  color: #6a6a6a;\n}\n.menu-item.action-disabled {\n  color: #888;\n}\n.menu-item .action-hotkey-info {\n  float: right;\n  padding-left: 15px;\n  color: #888;\n  font-size: 9px;\n  margin-top: 1px;\n}\n.icon16-left {\n  background-position-y: center;\n  background-position-x: 5px;\n  background-repeat: no-repeat;\n  background-size: 16px 16px;\n  padding-left: 25px;\n}\n.message-sink {\n  display: none;\n  position: absolute;\n  max-width: 400px;\n  padding: 2px 5px 2px 5px;\n  color: #fff;\n  background-color: rgba(40, 40, 40, 0.95);\n  border: solid 1px #000;\n  border-radius: 3px;\n  color: #ccc;\n  white-space: nowrap;\n  z-index: 999;\n}\n.action-info > div {\n  padding: 3px 0 3px 0;\n}\n.action-info-hotkey {\n  text-align: right;\n  font-style: italic;\n  color: #888;\n}\n.action-info-hint {\n  font-style: italic;\n  color: #E1A4A4;\n}\n.solid-list .solid-item {\n  background-image: url('../img/3d/solid32.png');\n}\n.solid-list .sketch-item {\n  padding-left: 50px;\n  background-position-x: 30px;\n  background-image: url('../img/3d/sketch32.png');\n}\n.modification-item {\n  word-wrap: break-word;\n  word-break: break-all;\n}\n.modification-button {\n  line-height: 27px;\n  font-size: 1.3em;\n  padding: 0 3px 0 3px;\n}\n.modification-button:hover {\n  color: yellowgreen;\n}\n.modification-button.danger:hover {\n  color: red;\n}\n.modification-button.action-disabled:hover {\n  color: #6a6a6a;\n}\n.modification-right-buttons {\n  display: none;\n}\n.history-selected .modification-right-buttons,\n.modification-item:hover .modification-right-buttons {\n  display: initial;\n}\n", ""]);
 	
 	// exports
 
 
 /***/ },
-/* 123 */
+/* 125 */
 /***/ function(module, exports) {
 
 	/*
@@ -36256,7 +36416,7 @@
 
 
 /***/ },
-/* 124 */
+/* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
