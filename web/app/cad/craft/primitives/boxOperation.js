@@ -2,11 +2,12 @@ import {box} from '../../../brep/brep-primitives'
 import {BREPSceneSolid} from '../../scene/wrappers/brepSceneObject';
 import {createBoxGeometry} from "scene/geoms";
 import BoxWizard from './BoxWizard';
+import {MShell} from '../../model/mshell';
 
 function createBox({width, height, depth}) {
   return {
     outdated: [],
-    created: [new BREPSceneSolid(box(width, height, depth))]
+    created: [new MShell(box(width, height, depth))]
   }
 }
 

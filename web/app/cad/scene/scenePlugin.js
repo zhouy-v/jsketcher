@@ -9,5 +9,5 @@ export function activate(context) {
   context.services.viewer = viewer;
   context.services.cadScene = new CadScene(viewer.sceneSetup.rootGroup);
 
-  context.bus.subscribe('scene:update', () => viewer.render());
+  context.streams.cadRegistry.update.attach(createSceneSynchronizer(context));
 }

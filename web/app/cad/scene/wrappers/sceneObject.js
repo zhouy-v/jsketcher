@@ -9,7 +9,7 @@ import {getAttribute} from '../../../../../modules/scene/objectData';
 export class SceneSolid {
   
   constructor(type, id, skin) {
-    this.tCadType = type || 'SOLID';
+    this.tCadType = type || 'SHELL';
 
     this.cadGroup = new THREE.Object3D();
     setAttribute(this.cadGroup, 'shell',  this);

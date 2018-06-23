@@ -1,43 +1,44 @@
-import {createToken} from "bus";
-import * as SceneGraph from 'scene/sceneGraph';
 import {EDGE, FACE, SKETCH_OBJECT} from '../scene/entites';
+import {stream} from 'lstream';
+import {MShell} from '../model/mshell';
 
 
-export function activate({bus, services}) {
+export function activate({streams, services}) {
 
-  let registry = new Map();
+  streams.cadRegistry = {
+    update: stream()
+  };
+  
+  let shellIndex = new Map();
   
   function getAllShells() {
-    return Array.from(registry.values());
+    return Array.from(shellIndex.values());
   }
 
   function update(toRemove, toAdd) {
     if (toRemove) {
       toRemove.forEach(shell => {
-        registry.delete(shell.tCadId);
-        SceneGraph.removeFromGroup(services.cadScene.workGroup, shell.cadGroup);
-        shell.dispose();
+        shellIndex.delete(shell.id);
       });
     }
     if (toAdd) {
       toAdd.forEach(shell => {
-        registry.set(shell.tCadId, shell);
-        SceneGraph.addToGroup(services.cadScene.workGroup, shell.cadGroup);
+        shellIndex.set(shell.id, shell);
       });
     }
     services.viewer.render();
-    bus.dispatch(TOKENS.SHELLS, registry);
+    streams.cadRegistry.update.next();
   }
   
   function reset() {
-    SOLIDS_COUNTER = 0;
+    MShell.ID_COUNTER = 0;
     update(getAllShells());
   }
 
   function findFace(faceId) {
     let shells = getAllShells();
     for (let shell of shells) {
-      for (let face of shell.sceneFaces) {
+      for (let face of shell.faces) {
         if (face.id === faceId) {
           return face;
         }
@@ -49,7 +50,7 @@ export function activate({bus, services}) {
   function findEdge(edgeId) {
     let shells = getAllShells();
     for (let shell of shells) {
-      for (let edge of shell.sceneEdges) {
+      for (let edge of shell.edges) {
         if (edge.id === edgeId) {
           return edge;
         }
@@ -77,16 +78,8 @@ export function activate({bus, services}) {
   }
   
   services.cadRegistry = {
-    getAllShells, update, reset, findFace, findEdge, findSketchObject, findEntity
+    getAllShells, update, reset, findFace, findEdge, findSketchObject, findEntity, shellIndex
   }
 }
 
 
-export const TOKENS = {
-  SHELLS: createToken('cadRegistry', 'shells'),
-};
-
-let SOLIDS_COUNTER = 0;
-export function genSolidId() {
-  return SOLIDS_COUNTER ++
-}

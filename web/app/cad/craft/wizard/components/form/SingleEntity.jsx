@@ -1,6 +1,5 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import {entitySelectionToken} from '../../../../scene/controls/pickControlPlugin';
 import {attachToForm} from './Form';
 import mapContext from 'ui/mapContext';
 

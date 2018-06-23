@@ -1,12 +1,14 @@
-import {createToken} from "bus";
 import {addModification} from './craftHistoryUtils';
+import {state} from 'lstream';
 
-export function activate({bus, services}) {
+export function activate({streams, services}) {
 
-  bus.enableState(TOKENS.MODIFICATIONS, {
+  let modificationsStream = state({
     history: [],
     pointer: -1
   });
+
+  streams.craft.modifications = modificationsStream;
 
   function isAdditiveChange({history, pointer}, {history:oldHistory, pointer:oldPointer}) {
     if (pointer < oldPointer) {
@@ -22,8 +24,9 @@ export function activate({bus, services}) {
     }
     return true;    
   }
-  
-  bus.subscribe(TOKENS.MODIFICATIONS, (curr, prev) => {
+
+  let prev = modificationsStream.value;
+  modificationsStream.attach(curr => {
     let beginIndex;
     if (isAdditiveChange(curr, prev)) {
       beginIndex = prev.pointer + 1;
@@ -35,6 +38,7 @@ export function activate({bus, services}) {
     for (let i = beginIndex; i <= pointer; i++) {
       modifyInternal(history[i]);
     }
+    prev = curr;
   });
 
 
@@ -48,21 +52,18 @@ export function activate({bus, services}) {
   }
 
   function modify(request) {
-    bus.updateState(TOKENS.MODIFICATIONS, modifications => addModification(modifications, request));
+    modificationsStream.update(modifications => addModification(modifications, request));
   }
   
   function reset(modifications) {
-    bus.dispatch(TOKENS.MODIFICATIONS, {
+    modificationsStream.next({
       history: modifications,
       pointer: modifications.length - 1
     });
   }
   
   services.craft = {
-    modify, reset, TOKENS
+    modify, reset
   }
 }
 
-export const TOKENS = {
-  MODIFICATIONS: createToken('craft', 'modifications')
-};
