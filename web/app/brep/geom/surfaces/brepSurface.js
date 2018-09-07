@@ -4,6 +4,7 @@ import {Plane} from '../impl/plane';
 import BrepCurve from '../curves/brepCurve';
 import {intersectNurbs} from './nurbsSurface';
 import {IsoCurveU, IsoCurveV} from '../curves/IsoCurve';
+import Datum from '../../../math/datum';
 
 export class BrepSurface {
 
@@ -150,6 +151,24 @@ export class BrepSurface {
 
   tangentPlaneInMiddle() {
     return this.tangentPlane(this.uMid, this.vMid);
+  }
+  
+  get datum() {
+    return this._datum || (this._datum = this.calcDatum());
+  }
+  
+  calcDatum() {
+    let origin, oppositeToOrigin, normal;
+    if (this.mirrored) {
+      let origin = this.point(this.uMax, this.vMin);
+      let normal = this.normalUV(this.uMax, this.vMin);
+      let oppositeToOrigin = this.point(this.uMin, this.vMin)
+    } else {
+      let origin = this.point(this.uMin, this.vMin);
+      let normal = this.normalUV(this.uMin, this.vMin);
+      let oppositeToOrigin = this.point(this.uMax, this.vMin)
+    }
+    return new Datum(origin, normal, oppositeToOrigin.minus(origin).normal())
   }
 }
 
