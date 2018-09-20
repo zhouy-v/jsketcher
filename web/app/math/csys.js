@@ -1,12 +1,16 @@
-import {Matrix3} from './l3space';
+import {AXIS, Matrix3, ORIGIN} from './l3space';
 
-export default class Datum {
+export default class CSys {
   
-  constructor(origin, normal, dir) {
+  static fromNormalAndDir(origin, normal, dir) {
+    return new CSys(origin, dir, normal.cross(dir), normal)  
+  }
+  
+  constructor(origin, x, y, z) {
     this.origin = origin;
-    this.x = dir;
-    this.y = normal.cross(dir);
-    this.z = normal;
+    this.x = x;
+    this.y = y;
+    this.z = z;
   }
   
   get inTransformation() {
@@ -27,4 +31,10 @@ export default class Datum {
     }
     return this._outTr;
   }
+  
+  copy() {
+    return CSys(this.origin, this.x, this.y, this.z);
+  }
 }
+
+CSys.ORIGIN = new CSys(ORIGIN, AXIS.X, AXIS.Y, AXIS.Z);
