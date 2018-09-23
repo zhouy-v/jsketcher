@@ -1,11 +1,18 @@
-
 import {ReadSketch} from './sketchReader';
 import {getSketchBoundaries} from './sketchBoundaries';
-import {TOKENS as CRAFT_TOKENS} from '../craft/craftPlugin';
 import {stream} from 'lstream';
+import {InPlaceSketcher} from './inPlaceSketcher';
+import {CAMERA_MODE} from '../scene/viewer';
+import {Matrix4} from 'three/src/math/Matrix4';
+import {ORIGIN} from '../../math/l3space';
+import sketcherUIContrib from './sketcherUIContrib';
 
-export function activate({streams, services}) {
-
+export function activate(ctx) {
+  
+  let {streams, services} = ctx;
+  
+  sketcherUIContrib(ctx);
+  
   streams.sketcher = {
     update: stream()
   };
@@ -63,16 +70,27 @@ export function activate({streams, services}) {
     services.storage.set(sketchStorageKey, JSON.stringify(data));
   }
 
-  
-  function sketchFace(sceneFace) {
-    updateSketchBoundaries(sceneFace);
-    let sketchURL = services.project.getSketchURL(sceneFace.id);
-    services.appTabs.show(sceneFace.id, 'Sketch ' + sceneFace.id, 'sketcher.html#' + sketchURL);
+  let inPlaceEditor = new InPlaceSketcher(services.dom.viewerContainer);
+  function sketchFace(face) {
+    updateSketchBoundaries(face);
+    let sketchURL = services.project.getSketchURL(face.id);
+
+    let sketchStorageKey = services.project.sketchStorageKey(face.id);
+
+    // services.appTabs.show(face.id, 'Sketch ' + face.id, 'sketcher.html#' + sketchURL);
+    services.viewer.setCameraMode(CAMERA_MODE.ORTHOGRAPHIC);
+    services.viewer.render();
+
+    inPlaceEditor.enter(services.viewer, face);
+    let sketchData = localStorage.getItem(sketchStorageKey);
+    inPlaceEditor.viewer.historyManager.init(sketchData);
+    inPlaceEditor.viewer.io.loadSketch(sketchData);
+
   }
   
   streams.craft.modifications.attach(updateAllSketches);
   
   services.sketcher = {
-    sketchFace, updateAllSketches, getAllSketches, readSketch
+    sketchFace, updateAllSketches, getAllSketches, readSketch, inPlaceEditor
   }
 }

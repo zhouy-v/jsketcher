@@ -15,6 +15,7 @@ import Vector from 'math/vector';
 
 import * as draw_utils from './shapes/draw-utils'
 import * as math from '../math/math'
+import {Matrix3} from '../math/l3space';
 
 /** @constructor */
 function Viewer(canvas, IO) {
@@ -78,6 +79,10 @@ function Viewer(canvas, IO) {
   this.historyManager = new HistoryManager(this);
   this.refresh();
 }
+
+Viewer.prototype.dispose = function() {
+  this.toolManager.dispose();
+};
 
 Viewer.prototype.roundToPrecision = function(value) {
   return value.toFixed(this.presicion);
@@ -181,14 +186,28 @@ Viewer.prototype.repaint = function() {
 
   const ctx = this.ctx;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  
-  ctx.fillStyle = "#808080";
-  ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // ctx.fillStyle = "#808080";
+  ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   
   //Order is important!
   ctx.transform(1, 0, 0, -1, 0, this.canvas.height );
-  ctx.transform(1, 0, 0, 1, this.translate.x , this.translate.y );
-  ctx.transform(this.scale, 0, 0, this.scale, 0, 0);
+  // ctx.transform(1, 0, 0, 1, this.translate.x , this.translate.y );
+  // ctx.transform(, 0, 0, , 0, 0);
+
+  if (window.TRS) {
+    let [a, b, c, d, e, f, zoom] = window.TRS;
+    ctx.transform(a, b, c, d, e, f);
+    let max = Math.max, abs = Math.abs;
+    // this.scale = max(abs(window.TRS[0]), abs(window.TRS[3]));
+    // console.log(window.TRS[0]);
+    // console.log(window.TRS[3]);
+    this.scale = zoom;
+    
+  } else {
+    ctx.transform(1, 0, 0, 1, this.translate.x , this.translate.y );
+    ctx.transform(this.scale, 0, 0, this.scale, 0, 0);
+  }
 
   this.__prevStyle = null;
 
@@ -280,15 +299,33 @@ Viewer.prototype.showBounds = function(x1, y1, x2, y2, offset) {
 };
 
 Viewer.prototype.screenToModel2 = function(x, y, out) {
-
   out.x = x * this.retinaPxielRatio;
   out.y = this.canvas.height - y * this.retinaPxielRatio;
 
-  out.x -= this.translate.x;
-  out.y -= this.translate.y;
+  if (window.TRS) {
+    let [a, b, c, d, e, f] = window.TRS;
 
-  out.x /= this.scale;
-  out.y /= this.scale;
+
+    out.z = 0;
+
+    let m = new Matrix3().
+    set34(
+      a, c, 0, e,
+      b, d, 0, f,
+      0, 0, 1, 0
+    ).invert();
+    // setBasis([a, b, 0], [c, d, 0], [e, f, 1]).invert();
+    let outV = m._apply(new Vector().setV(out));
+    out.x = outV.x;
+    out.y = outV.y;
+    
+  } else {
+    out.x -= this.translate.x;
+    out.y -= this.translate.y;
+
+    out.x /= this.scale;
+    out.y /= this.scale;
+  }
 };
 
 Viewer.prototype.screenToModel = function(e) {

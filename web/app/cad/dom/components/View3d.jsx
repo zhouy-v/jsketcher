@@ -2,7 +2,7 @@ import React from 'react';
 import PlugableControlBar from './PlugableControlBar';
 import ls from './View3d.less';
 import Abs from 'ui/components/Abs';
-import {AuxiliaryToolbar, HeadsUpToolbar} from './PlugableToolbar';
+import {AuxiliaryToolbar, HeadsUpToolbar, SketcherToolbarConstraints, SketcherToolbarGeneral} from './PlugableToolbar';
 import UISystem from './UISystem';
 import WizardManager from '../../craft/wizard/components/WizardManager';
 import FloatView from './FloatView';
@@ -24,6 +24,11 @@ export default class View3d extends React.Component {
       <FloatView />
       <div className={ls.mainArea} >
         <div id='viewer-container' />
+        <Abs left={5} top={5} className={ls.sketcherToolbars}>
+          <SketcherToolbarGeneral small vertical/>
+          <SketcherToolbarConstraints small vertical/>
+        </Abs>
+
         <Abs right={5} top={5}>
           <HeadsUpToolbar/>
           <Abs right={0} top='calc(100% + 15px)'>

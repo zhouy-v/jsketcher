@@ -9,7 +9,9 @@ export function activate({streams}) {
     },
     toolbars: {
       headsUp: state([]),
-      auxiliary: state([])
+      auxiliary: state([]),
+      sketcherGeneral: state([]),
+      sketcherConstraints: state([])
     }
   };
 

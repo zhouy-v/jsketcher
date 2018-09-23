@@ -4,6 +4,7 @@ export class ToolManager {
     this.defaultTool = defaultTool;
     this.tool = defaultTool;
     this.viewer = viewer;
+    this.disposers = [];
     const canvas = viewer.canvas;
     canvas.addEventListener('mousemove', (e) => {
       e.preventDefault();
@@ -37,27 +38,32 @@ export class ToolManager {
       this.tool.dblclick(e);
     }, false);
 
-    window.addEventListener("keydown", (e) => {
+    this.addEventListener(window, "keydown", (e) => {
       this.tool.keydown(e);
-      if (e.keyCode == 27) {
+      if (e.keyCode === 27) {
         this.releaseControl();
-      } else if (e.keyCode == 46 || e.keyCode == 8) {
-        var selection = viewer.selected.slice();
+      } else if (e.keyCode === 46 || e.keyCode === 8) {
+        let selection = viewer.selected.slice();
         viewer.deselectAll();
-        for (var i = 0; i < selection.length; i++) {
+        for (let i = 0; i < selection.length; i++) {
           viewer.remove(selection[i]);
         }
         viewer.refresh();
       }
     }, false);
-    window.addEventListener("keypress", (e) => {
+    this.addEventListener(window, "keypress", (e) => {
       this.tool.keydown(e);
     }, false);
-    window.addEventListener("keyup", (e) => {
+    this.addEventListener(window, "keyup", (e) => {
       this.tool.keydown(e);
     }, false);
   }
 
+  addEventListener(subject, event, fn, useCapture) {
+    subject.addEventListener(event, fn, useCapture);
+    this.disposers.push(() => subject.removeEventListener(event, fn, useCapture));
+  }
+  
   takeControl(tool) {
     this.tool.cleanup();
     this.switchTool(tool);
@@ -71,5 +77,9 @@ export class ToolManager {
 
   releaseControl() {
     this.takeControl(this.defaultTool);
+  }
+  
+  dispose() {
+    this.disposers.forEach(d => d());
   }
 }
