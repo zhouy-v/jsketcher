@@ -211,10 +211,46 @@ Viewer.prototype.repaint = function() {
     ctx.transform(this.scale, 0, 0, this.scale, 0, 0);
   }
 
+  this.drawFloor(ctx);
+  
   this.__prevStyle = null;
 
   this.__drawWorkspace(ctx, this._workspace, Viewer.__SKETCH_DRAW_PIPELINE);
   this.__drawWorkspace(ctx, this._serviceWorkspace, Viewer.__SIMPLE_DRAW_PIPELINE);
+};
+
+Viewer.prototype.drawFloor = function(ctx) {
+  ctx.lineWidth  = 1 / this.scale;
+  ctx.strokeStyle  = '#f7f6ff';
+  
+  let step = Math.floor(100 / this.scale);
+
+  let startPt = this._screenToModel(0, 0);
+  let endPt = this._screenToModel(this.canvas.width, this.canvas.height);
+  
+  let pt = {
+    x: startPt.x - startPt.x % step,
+    y: startPt.y - startPt.y % step
+  };
+
+  let linesAmountX = Math.floor( Math.abs(endPt.x - pt.x) / step );
+  let linesAmountY = Math.floor( Math.abs(endPt.y - pt.y) / step );
+  
+  for (let i = 0; i <= linesAmountX; ++i) {
+    ctx.beginPath();
+    ctx.moveTo(pt.x, startPt.y);
+    ctx.lineTo(pt.x, endPt.y);
+    ctx.stroke();
+    pt.x += step;
+  }
+  
+  for (let i = 0; i <= linesAmountY; ++i) {
+    ctx.beginPath();
+    ctx.moveTo(startPt.x, pt.y);
+    ctx.lineTo(endPt.x, pt.y);
+    ctx.stroke();
+    pt.y -= step;
+  }
 };
 
 Viewer.__SKETCH_DRAW_PIPELINE = [
