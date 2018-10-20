@@ -3,7 +3,7 @@ import {createTransparentPhongMaterial} from 'scene/materials';
 import {createMesh} from 'scene/objects/mesh';
 
 
-export function createPreviewer(sceneGeometryCreator, services) {
+export function createPreviewer(sceneGeometryCreator, services, initialParams) {
   const previewGroup = SceneGraph.createGroup();
   SceneGraph.addToGroup(services.cadScene.workGroup, previewGroup);
   
@@ -19,9 +19,14 @@ export function createPreviewer(sceneGeometryCreator, services) {
 
   function update(params) {
     destroyPreviewObject();
-    previewObject = createMesh(sceneGeometryCreator(params, services), IMAGINARY_SURFACE_MATERIAL);
+    let geometry = sceneGeometryCreator(params, services);
+    if (!geometry) {
+      services.viewer.requestRender();
+      return;
+    }
+    previewObject = createMesh(geometry, IMAGINARY_SURFACE_MATERIAL);
     previewGroup.add(previewObject);
-    services.viewer.render();
+    services.viewer.requestRender();
   }
 
   function dispose() {
@@ -30,6 +35,7 @@ export function createPreviewer(sceneGeometryCreator, services) {
     services.viewer.render();
   }
   
+  update(initialParams);
   return {update, dispose};
 }
 

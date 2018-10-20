@@ -24,7 +24,7 @@ let lineGeometry = null;
 
 export class MeshArrow extends Object3D {
 
-  constructor(dir, color, length, headLength, headWidth, lineWidth) {
+  constructor(dir, color, length, headLength, headWidth, lineWidth, materialCreate = params => new MeshBasicMaterial(params)) {
     super();
 
     if (color === undefined) color = 0xffff00;
@@ -41,8 +41,8 @@ export class MeshArrow extends Object3D {
 
     // dir is assumed to be normalized
 
-    let cone = new Mesh(tipGeometry, new MeshBasicMaterial({color}));
-    let line = new Mesh(lineGeometry, new MeshBasicMaterial({color}));
+    let cone = new Mesh(tipGeometry, materialCreate({color}));
+    let line = new Mesh(lineGeometry, materialCreate({color}));
 
     line.matrixAutoUpdate = false;
     cone.matrixAutoUpdate = false;

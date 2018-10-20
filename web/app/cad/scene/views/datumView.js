@@ -1,31 +1,36 @@
 import {View} from './view';
-import * as SceneGraph from '../../../../../modules/scene/sceneGraph';
-import {createArrow} from '../../../../../modules/scene/objects/auxiliary';
-import {moveObject3D} from '../../../../../modules/scene/objects/transform';
-import {AXIS} from '../../../math/l3space';
+import DatumObject3D from '../../craft/datum/datumObject';
+import {DATUM, SHELL} from '../entites';
+import {setAttribute} from '../../../../../modules/scene/objectData';
 
 export default class DatumView extends View {
 
-  constructor(edge) {
-    super(edge);
-    this.rootGroup = SceneGraph.createGroup();
-  }
-  
-  setUpAxises() {
-    let arrowLength = 100;
-    let createAxisArrow = createArrow.bind(null, arrowLength, 5, 2);
-    let addAxis = (axis, color) => {
-      let arrow = createAxisArrow(axis, color, 0.2);
-      moveObject3D(arrow, axis.scale(-arrowLength * 0.5));
-      SceneGraph.addToGroup(this.auxGroup, arrow);
-    };
-    addAxis(AXIS.X, 0xFF0000);
-    addAxis(AXIS.Y, 0x00FF00);
-    addAxis(AXIS.Z, 0x0000FF);
-  }
+  constructor(datum, viewer, beginOperation) {
+    super(datum);
 
+    class StartingOperationDatumObject3D extends DatumObject3D {
+      
+      operationStarted = false;
+      
+      dragStart(e, target) {
+        if (!this.operationStarted) {
+          beginOperation('DATUM_MOVE', {
+            datum: datum.id
+          });
+          this.operationStarted = true;
+        }
+        super.dragStart(e, target);  
+      }
+    }
+    
+    this.rootGroup = new StartingOperationDatumObject3D(datum.csys, viewer);
+    setAttribute(this.rootGroup, DATUM, this);
+    setAttribute(this.rootGroup, View.MARKER, this);
+  }
 
   dispose() {
-    
+    super.dispose();
+    this.rootGroup.dispose();
   }
 }
+

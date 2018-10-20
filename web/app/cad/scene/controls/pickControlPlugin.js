@@ -1,7 +1,9 @@
 import * as mask from 'gems/mask'
-import {getAttribute, setAttribute} from '../../../../../modules/scene/objectData';
+import {getAttribute, setAttribute} from 'scene/objectData';
 import {FACE, EDGE, SKETCH_OBJECT} from '../entites';
-import {state} from '../../../../../modules/lstream';
+import {state} from 'lstream';
+import {findAncestor} from 'scene/sceneGraph';
+import {EMPTY_OBJECT} from '../../../../../modules/gems/objects';
 
 export const PICK_KIND = {
   FACE: mask.type(1),
@@ -18,18 +20,39 @@ export function activate(context) {
   
   domElement.addEventListener('mousedown', mousedown, false);
   domElement.addEventListener('mouseup', mouseup, false);
+  domElement.addEventListener('mousemove', mousemove, false);
 
   let mouseState = {
     startX: 0,
     startY: 0
   };
 
+  let toDrag = undefined;
+  
   function mousedown(e) {
+    let draggableObjects = getDraggableObjects(services.viewer.sceneSetup.scene);
+
+    let pickResult = services.viewer.raycast(e, draggableObjects)[0];
+    if (pickResult) {
+      toDrag = findAncestor(pickResult.object, o => o.isDraggable === true, true);
+      if (toDrag) {
+        toDrag.dragStart(e, pickResult.object);
+        services.viewer.sceneSetup.trackballControls.enabled = false;
+      }
+    }
+    
     mouseState.startX = e.offsetX;
     mouseState.startY = e.offsetY;
   }
 
   function mouseup(e) {
+    if (toDrag) {
+      toDrag.dragDrop(e);
+      toDrag = undefined;
+      services.viewer.sceneSetup.trackballControls.enabled = true;
+      return;
+    }
+
     let dx = Math.abs(mouseState.startX - e.offsetX);
     let dy = Math.abs(mouseState.startY - e.offsetY);
     let TOL = 1;
@@ -39,6 +62,12 @@ export function activate(context) {
       } else {
         handlePick(e);
       }
+    }
+  }
+  
+  function mousemove(e) {
+    if (toDrag) {
+      toDrag.dragMove(e);
     }
   }
 
@@ -85,7 +114,7 @@ export function activate(context) {
   }
 
   function raycastObjects(event, kind, visitor) {
-    let pickResults = services.viewer.raycast(event, services.cadScene.workGroup);
+    let pickResults = services.viewer.raycast(event, services.cadScene.workGroup.children);
     const pickers = [
       (pickResult) => {
         if (mask.is(kind, PICK_KIND.SKETCH) && pickResult.object instanceof THREE.Line) {
@@ -126,36 +155,51 @@ export function activate(context) {
   }
 }
 
-function initStateAndServices({streams, services}) {
-  
-  services.selection = {
-  };
-
+export function defineStreams({streams}) {
   streams.selection = {
   };
-  
+  SELECTABLE_ENTITIES.forEach(entity => {
+    let selectionState = state([]);
+    streams.selection[entity] = state([]);
+  });
+
+}
+
+function initStateAndServices({streams, services}) {
+
+  services.selection = {};
+
   SELECTABLE_ENTITIES.forEach(entity => {
     let entitySelectApi = {
       objects: [],
       single: undefined
     };
     services.selection[entity] = entitySelectApi;
-    let selectionState = state([]);
-    streams.selection[entity] = selectionState;
+    let selectionState = streams.selection[entity];
     selectionState.attach(selection => {
       entitySelectApi.objects = selection.map(id => services.cadRegistry.findEntity(entity, id));
-      entitySelectApi.single = entitySelectApi.objects[0]; 
+      entitySelectApi.single = entitySelectApi.objects[0];
     });
     entitySelectApi.select = selection => selectionState.value = selection;
   });
 
-  //withdraw all
   streams.craft.models.attach(() => {
-    Object.values(streams.selection).forEach(ss => ss.next([]))  
-  })
+    withdrawAll(streams.selection)
+  });
 }
 
+export function withdrawAll(selectionStreams) {
+  Object.values(selectionStreams).forEach(stream => stream.next([]))
+}
 
-
+function getDraggableObjects(scene) {
+  let out = [];
+  scene.traverseVisible(o => {
+    if (o.isDraggable) {
+      out.push(o);
+    }
+  });
+  return out;
+}
 
 

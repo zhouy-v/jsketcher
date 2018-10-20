@@ -9,6 +9,7 @@ import * as UiEntryPointsPlugin from '../dom/uiEntryPointsPlugin';
 import * as MenuPlugin from '../dom/menu/menuPlugin';
 import * as KeyboardPlugin from '../keyboard/keyboardPlugin';
 import * as WizardPlugin from '../craft/wizard/wizardPlugin';
+import * as PreviewPlugin from '../preview/previewPlugin';
 import * as OperationPlugin from '../craft/operationPlugin';
 import * as CraftEnginesPlugin from '../craft/enginesPlugin';
 import * as CadRegistryPlugin from '../craft/cadRegistryPlugin';
@@ -39,10 +40,11 @@ export default function startApplication(callback) {
     UiEntryPointsPlugin,
     MenuPlugin,
     KeyboardPlugin,
-    WizardPlugin,
     CraftEnginesPlugin,
     OperationPlugin,
     CraftPlugin,
+    WizardPlugin,
+    PreviewPlugin,
     CraftUiPlugin,
     CadRegistryPlugin,
     tpiPlugin

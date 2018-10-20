@@ -25,8 +25,8 @@ export default class Viewer {
     this.sceneSetup.lookAt(obj);
   }
   
-  raycast(event, group) {
-    return this.sceneSetup.raycast(event, group);
+  raycast(event, objects) {
+    return this.sceneSetup.raycast(event, objects);
   }
   
   setCameraMode(mode) {
