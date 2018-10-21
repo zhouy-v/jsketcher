@@ -32,6 +32,7 @@ function previewer(ctx, initialParams, updateParams) {
   }
 
   let datum3D = view.rootGroup;
+  datum3D.operationStarted = true;
   datum3D.onMove = (begin, end, delta) => {
     updateParams(params => {
       params.x = end.x - mDatum.csys.origin.x;
@@ -54,6 +55,9 @@ function previewer(ctx, initialParams, updateParams) {
     datum3D.exitEditMode();
     datum3D.applyMove = NOOP; 
   }
+
+
+  update(initialParams);
 
   return {
     update, dispose
