@@ -46,7 +46,6 @@ function previewer(ctx, initialParams, updateParams) {
     datum3D.csys.origin.x += params.x;
     datum3D.csys.origin.y += params.y;
     datum3D.csys.origin.z += params.z;
-    ctx.services.viewer.requestRender();
   }
 
   function dispose() {

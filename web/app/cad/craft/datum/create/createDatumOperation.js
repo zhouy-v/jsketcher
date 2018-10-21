@@ -53,7 +53,6 @@ function previewer(ctx, initialParams, updateParams) {
   
   function update(params) {
     updateCSys(datum3D.csys, params, ctx.services.cadRegistry.findFace);
-    ctx.services.viewer.requestRender();
   }
   
   function dispose() {

@@ -24,10 +24,7 @@ export function activate(ctx) {
     }
   });
   
-  streams.craft.modifications.attach(({pointer, history}) => {
-    if (streams.wizard.insertOperation.value.type) {
-      return;
-    }
+  function gotoEditHistoryModeIfNeeded({pointer, history}) {
     if (pointer !== history.length - 1) {
       let {type, params} = history[pointer + 1];
       streams.wizard.effectiveOperation.value =  {
@@ -38,6 +35,14 @@ export function activate(ctx) {
     } else {
       streams.wizard.effectiveOperation.value = EMPTY_OBJECT;
     }
+
+  }
+  
+  streams.craft.modifications.attach(mod => {
+    if (streams.wizard.insertOperation.value.type) {
+      return;
+    }
+    gotoEditHistoryModeIfNeeded(mod);
   });
 
   streams.wizard.workingRequest = streams.wizard.effectiveOperation.map(opRequest => {
@@ -69,8 +74,9 @@ export function activate(ctx) {
       };
     },
 
-    close: () => {
+    cancel: () => {
       streams.wizard.insertOperation.value = EMPTY_OBJECT;
+      gotoEditHistoryModeIfNeeded(streams.craft.modifications.value);
     },
     
     applyWorkingRequest: () => {

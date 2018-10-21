@@ -16,20 +16,24 @@ export function activate(ctx) {
         previewContext.previewer.dispose();
         previewContext.previewer = null;
         previewContext.operation = null;
+        ctx.services.viewer.requestRender();
       }
       return;
     }
     if (type !== previewContext.operation) {
       if (previewContext.previewer != null) {
         previewContext.previewer.dispose();
+        ctx.services.viewer.requestRender();
         previewContext.previewer = null;
       }
       let operation = services.operation.get(type);
 
       if (operation.previewGeomProvider) {
-        previewContext.previewer = createPreviewer(operation.previewGeomProvider, services, params);  
+        previewContext.previewer = createPreviewer(operation.previewGeomProvider, services, params);
+        ctx.services.viewer.requestRender();
       } else if (operation.previewer) {
         previewContext.previewer = operation.previewer(ctx, params, updateParams);
+        ctx.services.viewer.requestRender();
       } else {
         previewContext.previewer = null;
       }
@@ -37,6 +41,7 @@ export function activate(ctx) {
     } else {
       if (previewContext.previewer) {
         previewContext.previewer.update(params);
+        ctx.services.viewer.requestRender();
       }
     }
   });

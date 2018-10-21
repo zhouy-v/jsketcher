@@ -26,13 +26,11 @@ export function createPreviewer(sceneGeometryCreator, services, initialParams) {
     }
     previewObject = createMesh(geometry, IMAGINARY_SURFACE_MATERIAL);
     previewGroup.add(previewObject);
-    services.viewer.requestRender();
   }
 
   function dispose() {
     destroyPreviewObject();
     SceneGraph.removeFromGroup(services.cadScene.workGroup, previewGroup);
-    services.viewer.render();
   }
   
   update(initialParams);

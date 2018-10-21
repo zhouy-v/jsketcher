@@ -8,21 +8,20 @@ import validateParams from '../../validateParams';
 import {NOOP} from 'gems/func';
 import {clone} from 'gems/objects';
 
-function WizardManager({type, changingHistory, resolve, close, stepHistory, insertOperation, cancelHistoryEdit, applyWorkingRequest, validator}) {
+function WizardManager({type, changingHistory, resolve, cancel, stepHistory, insertOperation, cancelHistoryEdit, applyWorkingRequest, validator}) {
   if (!type) {
     return null;
   }
   return <Wizard resolveOperation={resolve}
                  validator={validator}
-                 onCancel={changingHistory ? cancelHistoryEdit : undefined}
-                 onOK={applyWorkingRequest}
-                 close={changingHistory ? NOOP : close}/>
+                 onCancel={changingHistory ? cancelHistoryEdit : cancel}
+                 onOK={applyWorkingRequest} />
 }
 
 export default decoratorChain(
   connect(streams => streams.wizard.effectiveOperation),
   mapContext((ctx, props) => ({
-    close: ctx.services.wizard.close,
+    cancel: ctx.services.wizard.cancel,
     validator: (params, schema) => validateParams(ctx.services, params, schema), 
     resolve: type => ctx.services.operation.get(type),
     cancelHistoryEdit: () => ctx.streams.craft.modifications.update(modifications => finishHistoryEditing(modifications)),

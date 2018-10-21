@@ -105,10 +105,7 @@ export default class Wizard extends React.Component {
   };
 
   cancel = () => {
-    if (this.props.onCancel) {
-      this.props.onCancel();
-    }
-    this.props.close();
+    this.props.onCancel();
   };
 
   onOK = () => {
@@ -125,7 +122,6 @@ export default class Wizard extends React.Component {
         return;
       }
       this.props.onOK();
-      this.props.close();
     } catch (error) {
       this.handleError(error);
     }
