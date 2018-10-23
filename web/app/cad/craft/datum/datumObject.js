@@ -1,4 +1,4 @@
-import {Geometry, Line, LineBasicMaterial, Object3D, Vector3} from 'three';
+import {Geometry, Line, LineBasicMaterial, MeshBasicMaterial, Object3D, Vector3} from 'three';
 
 
 import CSysObject3D from './csysObject';
@@ -17,10 +17,20 @@ export default class DatumObject3D extends Object3D {
     super();
     this.viewer = viewer;
     this.csys = csys.clone();
-    this.csysObj = new CSysObject3D(this.csys, this.viewer.sceneSetup);
+    this.csysObj = new CSysObject3D(this.csys, this.viewer.sceneSetup, {
+      createHandle: true,
+      handleMaterial: () => new MeshBasicMaterial({
+        transparent: true,
+        opacity: 0.5,
+        color: 0xAA8439,
+        visible: false
+      })
+    });
+    addOnHoverBehaviour(this.csysObj.xAxis.handle, this.viewer);
+    addOnHoverBehaviour(this.csysObj.yAxis.handle, this.viewer);
+    addOnHoverBehaviour(this.csysObj.zAxis.handle, this.viewer);
     this.add(this.csysObj);
     this.exitEditMode = NOOP;
-    this.isDraggable = true;
     this.beingDraggedAxis = null;
   }
   
@@ -124,4 +134,15 @@ export default class DatumObject3D extends Object3D {
     this.exitEditMode();
     this.csysObj.dispose();
   }
+}
+
+function addOnHoverBehaviour(handle, viewer) {
+  handle.onMouseEnter = function() {
+    handle.material.visible = true;
+    viewer.requestRender();
+  };
+  handle.onMouseLeave = function() {
+    handle.material.visible = false;
+    viewer.requestRender();
+  };
 }

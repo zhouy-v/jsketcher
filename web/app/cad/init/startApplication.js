@@ -2,6 +2,7 @@ import * as LifecyclePlugin from './lifecyclePlugin';
 import * as AppTabsPlugin from '../dom/appTabsPlugin';
 import * as DomPlugin from '../dom/domPlugin';
 import * as PickControlPlugin from '../scene/controls/pickControlPlugin';
+import * as MouseEventSystemPlugin from '../scene/controls/mouseEventSystemPlugin';
 import * as ScenePlugin from '../scene/scenePlugin';
 import * as SelectionMarkerPlugin from '../scene/selectionMarker/selectionMarkerPlugin';
 import * as ActionSystemPlugin from '../actions/actionSystemPlugin';
@@ -53,6 +54,7 @@ export default function startApplication(callback) {
   let plugins = [
     DomPlugin,
     ScenePlugin,
+    MouseEventSystemPlugin,
     PickControlPlugin,
     SelectionMarkerPlugin,
     SketcherPlugin,

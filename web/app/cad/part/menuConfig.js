@@ -37,5 +37,15 @@ export default [
     label: 'solid-context',
     info: 'solid context actions',
     actions: ['LookAtSolid']
-  }
+  },
+  {
+    id: 'datum',
+    label: 'datum',
+    cssIcons: ['magic'],
+    info: 'operations on datum',
+    actions: []
+    // actions: ['DATUM_MOVE', 'DATUM_ROTATE', 'DATUM_REBASE', '-', 'PLANE_FROM_DATUM', 'BOX', 'SPHERE', 'TORUS', 
+    //   'CONE', 'CYLINDER']
+  },
+
 ];

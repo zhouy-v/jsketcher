@@ -11,7 +11,7 @@ export default class Viewer {
     this.sceneSetup.render();  
   }
 
-  requestRender() {
+  requestRender = () => {
     if (this.renderRequested) {
       return;
     }
@@ -19,7 +19,7 @@ export default class Viewer {
       this.renderRequested = false;
       this.render();
     });
-  }
+  };
   
   lookAt(obj) {
     this.sceneSetup.lookAt(obj);

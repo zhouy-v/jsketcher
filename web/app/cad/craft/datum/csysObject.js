@@ -1,18 +1,31 @@
-import {Geometry, Line, LineBasicMaterial, MeshLambertMaterial, Object3D, Quaternion, Vector3} from 'three';
+import {
+  Geometry, Line, LineBasicMaterial, MeshBasicMaterial, MeshLambertMaterial, Object3D, Quaternion,
+  Vector3
+} from 'three';
 import {AXIS} from '../../../math/l3space';
 import {MeshArrow} from 'scene/objects/auxiliary';
 import {OnTopOfAll} from 'scene/materialMixins';
 
 export default class CSysObject3D extends Object3D {
 
-  constructor(csys, sceneSetup) {
+  constructor(csys, sceneSetup, arrowParams) {
     super();
     
     this.csys = csys;
     this.sceneSetup = sceneSetup;
 
     function createBasisArrow(axis, color) {
-      return new MeshArrow(axis, color, SIZE_MODEL, 30, 15, 2, p => new MeshLambertMaterial( p ));
+      let meshArrow = new MeshArrow({
+        dir: axis,
+        color,
+        length: CSYS_SIZE_MODEL,
+        headLength: 30,
+        headWidth: 15,
+        lineWidth: 2,
+        materialCreate: p => new MeshLambertMaterial(p),
+        ...arrowParams
+      });
+      return meshArrow;
     }
 
     this.xAxis = createBasisArrow(AXIS.X, 0xFF0000);
@@ -53,17 +66,19 @@ export default class CSysObject3D extends Object3D {
       let tanHFov = Math.atan((camera.fov / 2) / 180 * Math.PI);
       let fitUnits = tanHFov * z * 2;
 
-      let modelTakingPart = SIZE_MODEL / fitUnits;
+      let modelTakingPart = CSYS_SIZE_MODEL / fitUnits;
       let modelActualSizePx = viewHeight * modelTakingPart;
       return SIZE_PX / modelActualSizePx;
     }
   }
   
   dispose() {
-    this.children.forEach(c => c.dispose());
+    this.xAxis.dispose();
+    this.yAxis.dispose();
+    this.zAxis.dispose();
   }
 }
 
-const SIZE_MODEL = 100;
+export const CSYS_SIZE_MODEL = 100;
 
 const SIZE_PX = 50;

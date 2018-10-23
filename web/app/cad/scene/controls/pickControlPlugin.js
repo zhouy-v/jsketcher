@@ -2,8 +2,6 @@ import * as mask from 'gems/mask'
 import {getAttribute, setAttribute} from 'scene/objectData';
 import {FACE, EDGE, SKETCH_OBJECT} from '../entites';
 import {state} from 'lstream';
-import {findAncestor} from 'scene/sceneGraph';
-import {EMPTY_OBJECT} from '../../../../../modules/gems/objects';
 
 export const PICK_KIND = {
   FACE: mask.type(1),
@@ -20,39 +18,18 @@ export function activate(context) {
   
   domElement.addEventListener('mousedown', mousedown, false);
   domElement.addEventListener('mouseup', mouseup, false);
-  domElement.addEventListener('mousemove', mousemove, false);
 
   let mouseState = {
     startX: 0,
     startY: 0
   };
 
-  let toDrag = undefined;
-  
   function mousedown(e) {
-    let draggableObjects = getDraggableObjects(services.viewer.sceneSetup.scene);
-
-    let pickResult = services.viewer.raycast(e, draggableObjects)[0];
-    if (pickResult) {
-      toDrag = findAncestor(pickResult.object, o => o.isDraggable === true, true);
-      if (toDrag) {
-        toDrag.dragStart(e, pickResult.object);
-        services.viewer.sceneSetup.trackballControls.enabled = false;
-      }
-    }
-    
     mouseState.startX = e.offsetX;
     mouseState.startY = e.offsetY;
   }
 
   function mouseup(e) {
-    if (toDrag) {
-      toDrag.dragDrop(e);
-      toDrag = undefined;
-      services.viewer.sceneSetup.trackballControls.enabled = true;
-      return;
-    }
-
     let dx = Math.abs(mouseState.startX - e.offsetX);
     let dy = Math.abs(mouseState.startY - e.offsetY);
     let TOL = 1;
@@ -62,12 +39,6 @@ export function activate(context) {
       } else {
         handlePick(e);
       }
-    }
-  }
-  
-  function mousemove(e) {
-    if (toDrag) {
-      toDrag.dragMove(e);
     }
   }
 
@@ -191,15 +162,3 @@ function initStateAndServices({streams, services}) {
 export function withdrawAll(selectionStreams) {
   Object.values(selectionStreams).forEach(stream => stream.next([]))
 }
-
-function getDraggableObjects(scene) {
-  let out = [];
-  scene.traverseVisible(o => {
-    if (o.isDraggable) {
-      out.push(o);
-    }
-  });
-  return out;
-}
-
-
