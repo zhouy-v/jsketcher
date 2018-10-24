@@ -21,6 +21,13 @@ export default class Viewer {
     });
   };
   
+  setVisualProp = (obj, prop, value) => {
+    if (obj[prop] !== value) {
+      obj[prop] = value;
+      this.requestRender();
+    }
+  };
+  
   lookAt(obj) {
     this.sceneSetup.lookAt(obj);
   }

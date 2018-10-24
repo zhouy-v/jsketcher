@@ -7,11 +7,13 @@ import {CSYS_SIZE_MODEL} from '../../craft/datum/csysObject';
 
 export default class DatumView extends View {
 
-  constructor(datum, viewer, beginOperation) {
+  constructor(datum, viewer, beginOperation, showDatumMenu) {
     super(datum);
 
     class MenuButton extends Mesh {
-      
+
+      mouseInside;
+
       constructor() {
         super(new SphereGeometry( 1 ), new MeshBasicMaterial({
           transparent: true,
@@ -28,15 +30,18 @@ export default class DatumView extends View {
       }
 
       onMouseEnter() {
+        this.mouseInside = true;
+        this.updateVisibility();
         this.material.color.setHex(0xFBB4FF);
         viewer.requestRender();
       }
 
-      onMouseLeave() {
+      onMouseLeave(e, hits, behindHits) {
+        this.mouseInside = false;
+        this.updateVisibility();
         this.material.color.setHex(0xFFFFFF);
         viewer.requestRender();
       }
-
 
       onMouseDown() {
         this.material.color.setHex(0xB500FF);
@@ -47,6 +52,39 @@ export default class DatumView extends View {
         this.material.color.setHex(0xFBB4FF);
         viewer.requestRender();
       }
+
+      onMouseClick(e) {
+        showDatumMenu({
+          x: e.offsetX,
+          y: e.offsetY
+        });
+      }
+      
+      updateVisibility() {
+        let datum3D = this.parent.parent;
+        viewer.setVisualProp(this.material, 'visible', !datum3D.operationStarted && 
+          (this.mouseInside || datum3D.affordanceArea.mouseInside));
+      }
+    }
+
+    class ActiveAffordanceBox extends AffordanceBox {
+
+      mouseInside;
+      
+      onMouseEnter(e, hits) {
+        this.mouseInside = true;
+        this.parent.parent.menuButton.updateVisibility();
+        
+      }
+      
+      onMouseLeave(e, hits) {
+        this.mouseInside = false;
+        this.parent.parent.menuButton.updateVisibility();
+      }
+
+      passMouseEvent(e, hits) {
+        return true;
+      }
     }
     
     class StartingOperationDatumObject3D extends DatumObject3D {
@@ -55,45 +93,31 @@ export default class DatumView extends View {
 
       constructor(csys, viewer) {
         super(csys, viewer);
-        this.affordanceArea = new AffordanceBox();
+        this.affordanceArea = new ActiveAffordanceBox();
         this.menuButton = new MenuButton();
         this.csysObj.add(this.affordanceArea);
         this.csysObj.add(this.menuButton);
       }
-      
-      dragStart(e, target, hits) {
-        if (target === this.affordanceArea || target === this.menuButton || hits.find(h => h.object === this.menuButton)) {
-          return true;
-        }
+
+      dragStart(e, axis) {
         if (!this.operationStarted) {
           beginOperation('DATUM_MOVE', {
             datum: datum.id
           });
-          this.operationStarted = true;
+          this.beginOperation();
         }
-        super.dragStart(e, target);
+        super.dragStart(e, axis);
       }
 
-      onMouseMoveRaycast(hits) {
-        let aff = false;
-        let menu = false;
-        // let axisHandle = false;
-        hits.forEach(hit => {
-          if (hit.object === this.affordanceArea) {
-            aff = true;
-          // } else if (hit.object === this.csysObj.xAxis.handle 
-          //   || hit.object === this.csysObj.yAxis.handle 
-          //   || hit.object === this.csysObj.zAxis.handle) {
-          //   axisHandle = true;
-          } else if (hit.object === this.menuButton) {
-            menu = true;
-          }
-        });
-        let prev = this.menuButton.material.visible;
-        this.menuButton.material.visible = (aff || menu) && !this.operationStarted;
-        if (prev !== this.menuButton.material.visible) {
-          viewer.requestRender();
-        }
+      beginOperation() {
+        this.operationStarted = true;
+        this.menuButton.updateVisibility();
+      }
+
+      finishOperation() {
+        this.operationStarted = false;
+        this.menuButton.updateVisibility();
+        this.exitEditMode();  
       }
       
       dispose() {

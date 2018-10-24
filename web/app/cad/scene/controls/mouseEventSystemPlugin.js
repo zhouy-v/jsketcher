@@ -1,4 +1,4 @@
-import {findAncestor} from '../../../../../modules/scene/sceneGraph';
+import {findAncestor} from 'scene/sceneGraph';
 
 export function activate(context) {
   const {services, streams} = context;
@@ -8,87 +8,103 @@ export function activate(context) {
   domElement.addEventListener('mouseup', mouseup, false);
   domElement.addEventListener('mousemove', mousemove, false);
 
-  let toDrag = null;
-
   let performRaycast = e => services.viewer.raycast(e, services.viewer.sceneSetup.scene.children);
+
+  let toDrag = null;
+  let pressed = new Set();
+  
+  function startDrag(objectToDrag, e) {
+    if (toDrag) {
+      stopDrag(e);
+    } 
+    toDrag = objectToDrag;
+    services.viewer.sceneSetup.trackballControls.enabled = false;
+  }
+  
+  function stopDrag(e) {
+    toDrag.dragDrop(e);
+    toDrag = null;
+    services.viewer.sceneSetup.trackballControls.enabled = true;
+  }
   
   function mousedown(e) {
-    let handled = false;
+    pressed.clear();
     let hits = performRaycast(e);
     for (let hit of hits) {
-      toDrag = findAncestor(hit.object, o => o.dragStart, true);
-      if (toDrag) {
-        if (!!toDrag.dragStart(e, hit.object, hits)) {
-          continue
-        }
-        handled = true;
-        services.viewer.sceneSetup.trackballControls.enabled = false;
+      let obj = hit.object;
+      if (obj && obj.onMouseDown) {
+        obj.onMouseDown(e, hits, objectToDrag => startDrag(objectToDrag, e));
       }
-    }
-    if (handled) {
-      return;
-    }
-    
-    for (let hit of hits) {
-      let onDownReceiver = findAncestor(hit.object, o => o.onMouseDown, true);
-      if (onDownReceiver) {
-        if (!!onDownReceiver.onMouseDown(e, hit.object, hits)) {
-          continue;
-        }
-      }
-      break;
-    }
-  }
-
-  function mouseup(e) {
-    if (toDrag) {
-      toDrag.dragDrop(e);
-      toDrag = null;
-      services.viewer.sceneSetup.trackballControls.enabled = true;
-    } else {
-      let hits = performRaycast(e);
-      for (let hit of hits) {
-        let onUpReceiver = findAncestor(hit.object, o => o.onMouseUp, true);
-        if (onUpReceiver) {
-          if (!!onUpReceiver.onMouseUp(e, hit.object, hits)) {
-            continue;
-          }
-        }
+      pressed.add(obj);
+      if (!hit.object.passMouseEvent || !hit.object.passMouseEvent(e, hits)) {
         break;
       }
     }
   }
 
-  let mouseEnteredObjects = new Set();
+  function mouseup(e) {
+    if (toDrag) {
+      stopDrag(e);
+      mousemove(e);
+    } else {
+      let hits = performRaycast(e);
+      for (let hit of hits) {
+        let obj = hit.object;
+        if (obj && obj.onMouseUp) {
+          obj.onMouseUp(e, hits);
+        }
+        if (pressed.has(obj) && obj.onMouseClick) {
+          obj.onMouseClick(e, hits);
+        }
+        if (!hit.object.passMouseEvent || !hit.object.passMouseEvent(e, hits)) {
+          break;
+        }
+      }
+      pressed.clear();
+    }
+  }
 
+  let entered = new Set();
+  let valid = new Set();
+  
   function mousemove(e) {
-    let hits = performRaycast(e);
+    
     if (toDrag) {
       toDrag.dragMove(e);
     } else {
-      let newMouseEnteredObjects = new Set();
+      let hits = performRaycast(e);
+      
+      valid.clear();
       for (let hit of hits) {
-        let obj = findAncestor(hit.object, o => o.onMouseEnter, true);
-        if (!obj) {
-          continue;
+        valid.add(hit.object);
+        if (!hit.object.passMouseEvent || !hit.object.passMouseEvent(e, hits)) {
+          break;
         }
-        if (!mouseEnteredObjects.has(obj)) {
-          obj.onMouseEnter(e, hit.object, hits);
-        }
-        newMouseEnteredObjects.add(obj);
       }
-      Array.from(mouseEnteredObjects).forEach(o => {
-        if (!newMouseEnteredObjects.has(o) && o.onMouseLeave) {
-          o.onMouseLeave(e);
+
+      entered.forEach(e => {
+        if (!valid.has(e) && e.onMouseLeave) {
+          e.onMouseLeave(e, hits);
         }
       });
-      mouseEnteredObjects.clear();
-      mouseEnteredObjects = newMouseEnteredObjects;
+      
+      valid.forEach(e => {
+        if (!entered.has(e) && e.onMouseEnter) {
+          e.onMouseEnter(e, hits);
+        }
+        if (e.onMouseMove) {
+          e.onMouseMove(e, hits);
+        }
+      });
+      
+      let t = valid;
+      valid = entered;
+      entered = t;
+      valid.clear();
     }
-    services.viewer.sceneSetup.scene.traverseVisible(o => {
-      if (o.onMouseMoveRaycast) {
-        o.onMouseMoveRaycast(hits);
-      }
-    });
   }
+}
+
+export function hasObject(hits, object) {
+  return hits.find(hit => hit.object === object);
 }

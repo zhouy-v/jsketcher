@@ -72,27 +72,24 @@ export default class DatumObject3D extends Object3D {
     }
   }
   
-  dragStart(e, target) {
-    let axis = findAncestor(target, o => o === this.csysObj.xAxis || o === this.csysObj.yAxis || o === this.csysObj.zAxis);
-    if (axis) {
-      this.dragInfo = {
-        csysOrigin: this.csys.origin.copy(),
-        originViewCoord: this.viewer.sceneSetup.modelToScreen(this.csys.origin),
-        startX: e.offsetX,
-        startY: e.offsetY,
-      };
-      switch (axis) {
-        case this.csysObj.xAxis:
-          this.setMoveMode(DatumObject3D.AXIS.X);
-          break;
-        case this.csysObj.yAxis:
-          this.setMoveMode(DatumObject3D.AXIS.Y);
-          break;
-        case this.csysObj.zAxis:
-        default:
-          this.setMoveMode(DatumObject3D.AXIS.Z);
-          break;
-      }
+  dragStart(e, axis) {
+    this.dragInfo = {
+      csysOrigin: this.csys.origin.copy(),
+      originViewCoord: this.viewer.sceneSetup.modelToScreen(this.csys.origin),
+      startX: e.offsetX,
+      startY: e.offsetY,
+    };
+    switch (axis) {
+      case this.csysObj.xAxis:
+        this.setMoveMode(DatumObject3D.AXIS.X);
+        break;
+      case this.csysObj.yAxis:
+        this.setMoveMode(DatumObject3D.AXIS.Y);
+        break;
+      case this.csysObj.zAxis:
+      default:
+        this.setMoveMode(DatumObject3D.AXIS.Z);
+        break;
     }
   }
 
@@ -137,12 +134,15 @@ export default class DatumObject3D extends Object3D {
 }
 
 function addOnHoverBehaviour(handle, viewer) {
+  handle.onMouseDown = function(e, hits, startDrag) {
+    let datum = this.parent.parent.parent;
+    startDrag(datum);
+    datum.dragStart(e, this.parent);
+  };
   handle.onMouseEnter = function() {
-    handle.material.visible = true;
-    viewer.requestRender();
+    viewer.setVisualProp(handle.material, 'visible', true);
   };
   handle.onMouseLeave = function() {
-    handle.material.visible = false;
-    viewer.requestRender();
+    viewer.setVisualProp(handle.material, 'visible', false);
   };
 }
