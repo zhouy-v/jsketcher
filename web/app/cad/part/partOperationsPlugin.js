@@ -1,4 +1,3 @@
-import boxOperation from '../craft/primitives/boxOperation';
 import extrudeOperation from '../craft/cutExtrude/extrudeOperation';
 import cutOperation from '../craft/cutExtrude/cutOperation';
 import planeOperation from '../craft/primitives/simplePlane/simplePlaneOperation';
@@ -8,6 +7,8 @@ import createDatumOperation from '../craft/datum/create/createDatumOperation';
 import moveDatumOperation from '../craft/datum/move/moveDatumOperation';
 import rotateDatumOperation from '../craft/datum/rotate/rotateDatumOperation';
 import datumOperation from '../craft/primitives/plane/planeOperation';
+import boxOperation from '../craft/primitives/box/boxOperation';
+import sphereOperation from '../craft/primitives/sphere/sphereOperation';
 
 export function activate({services}) {
   services.operation.registerOperations([
@@ -20,6 +21,7 @@ export function activate({services}) {
     createDatumOperation,
     moveDatumOperation,
     rotateDatumOperation,
-    datumOperation
+    datumOperation,
+    sphereOperation
   ])
 }
