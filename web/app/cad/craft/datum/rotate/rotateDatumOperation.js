@@ -1,6 +1,5 @@
 import schema from './rotateDatumOpSchema';
 import {MDatum} from '../../../model/mdatum';
-import {NOOP} from 'gems/func';
 import RotateDatumWizard from './RotateDatumWizard';
 import {Matrix3, ORIGIN} from '../../../../math/l3space';
 import {DEG_RAD} from '../../../../math/math';
@@ -10,9 +9,14 @@ function rotate(params, {cadRegistry}) {
   
   let mDatum = cadRegistry.findDatum(params.datum);
 
+  let axis = mDatum.csys[params.axis.toLowerCase()];
+  
+  // originalBasis.setBasisAxises(mDatum.csys.x, mDatum.csys.y, mDatum.csys.z);
+  originalBasis = mDatum.csys.inTransformation;
+
   let csys = mDatum.csys.clone();
 
-  applyRotation(csys, params.angle, params.axis.toLowerCase());
+  applyRotation(mDatum.csys, csys, params.angle, axis);
 
   return {
     outdated: [mDatum],
@@ -20,10 +24,9 @@ function rotate(params, {cadRegistry}) {
   }
 }
 
-let originalBasis = new Matrix3();
 let auxMatrix = new Matrix3();
 
-function previewer(ctx, initialParams, updateParams) {
+function previewer(ctx, initialParams) {
 
   let mDatum = ctx.services.cadRegistry.findDatum(initialParams.datum);
   
@@ -38,10 +41,9 @@ function previewer(ctx, initialParams, updateParams) {
   let datum3D = view.rootGroup;
   datum3D.beginOperation(true);
 
-  originalBasis = new Matrix3().setBasisAxises(mDatum.csys.x, mDatum.csys.y, mDatum.csys.z);
-
   function update(params) {
-    applyRotation(datum3D.csys, params.angle, params.axis.toLowerCase());
+    let axis = mDatum.csys[params.axis.toLowerCase()];
+    applyRotation(mDatum.csys, datum3D.csys, params.angle, axis);
   }
 
   function dispose() {
@@ -57,13 +59,11 @@ function previewer(ctx, initialParams, updateParams) {
   }
 }
 
-function applyRotation(csys, angle, axisProp) {
-  let axis = csys[axisProp];
+function applyRotation(origCsys, csys, angle, axis) {
   auxMatrix.rotate(angle * DEG_RAD, axis, ORIGIN);
-  originalBasis.combine(auxMatrix, auxMatrix);
-  csys.x.set(auxMatrix.mxx, auxMatrix.myx, auxMatrix.mzx);
-  csys.y.set(auxMatrix.mxy, auxMatrix.myy, auxMatrix.mzy);
-  csys.z.set(auxMatrix.mxz, auxMatrix.myz, auxMatrix.mzz);
+  auxMatrix.__apply(origCsys.x, csys.x);
+  auxMatrix.__apply(origCsys.y, csys.y);
+  auxMatrix.__apply(origCsys.z, csys.z);
 }
 
 export default {
