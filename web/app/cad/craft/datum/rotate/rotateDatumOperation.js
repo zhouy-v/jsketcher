@@ -11,9 +11,6 @@ function rotate(params, {cadRegistry}) {
 
   let axis = mDatum.csys[params.axis.toLowerCase()];
   
-  // originalBasis.setBasisAxises(mDatum.csys.x, mDatum.csys.y, mDatum.csys.z);
-  originalBasis = mDatum.csys.inTransformation;
-
   let csys = mDatum.csys.clone();
 
   applyRotation(mDatum.csys, csys, params.angle, axis);
