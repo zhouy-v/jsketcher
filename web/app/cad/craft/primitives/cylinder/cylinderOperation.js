@@ -1,9 +1,9 @@
-import {SphereGeometry} from 'three';
-import schema from './sphereOpSchema';
+import {CylinderGeometry} from 'three';
+import schema from './cylinderOpSchema';
 import primitivePreviewer from '../primitivePreviewer';
-import SphereWizard from './SphereWizard';
+import CylinderWizard from './CylinderWizard';
 
-function createBox(params, services) {
+function run(params, services) {
   let mDatum = params.datum && services.cadRegistry.findDatum(params.datum);
 
   return {
@@ -13,13 +13,15 @@ function createBox(params, services) {
 }
 
 export default {
-  id: 'SPHERE',
-  label: 'Sphere',
-  icon: 'img/cad/sphere',
-  info: 'creates new sphere box',
-  paramsInfo: ({radius}) => `(${radius})`,
-  previewer: primitivePreviewer(() => new SphereGeometry(1, 50, 50), ({radius: dx, radius: dy, radius: dz}) => ({dx, dy, dz})),
-  form: SphereWizard,
-  schema
+  id: 'CYLINDER',
+  label: 'Cylinder',
+  icon: 'img/cad/cylinder',
+  info: 'creates new cylinder',
+  paramsInfo: ({radius, height}) => `(${radius}, ${height})`,
+  previewer: primitivePreviewer(() => new CylinderGeometry(1, 1, 1, 50, 1), 
+    ({radius: dx, height: dy, radius:dz}) => ({dx, dy, dz}), [0, 0.5, 0]),
+  form: CylinderWizard,
+  schema,
+  run
 };
 

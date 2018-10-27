@@ -5,12 +5,12 @@ export default {
   },
   radius: {
     type: 'number',
-    defaultValue: 100,
+    defaultValue: 250,
     min: 0
   },
-  height: {
+  tube: {
     type: 'number',
-    defaultValue: 250,
+    defaultValue: 50,
     min: 0
   },
 

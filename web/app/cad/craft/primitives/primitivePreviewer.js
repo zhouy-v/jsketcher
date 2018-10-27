@@ -3,7 +3,7 @@ import {IMAGINARY_SURFACE_MATERIAL} from '../../preview/scenePreviewer';
 import CSys from '../../../math/csys';
 import * as SceneGraph from '../../../../../modules/scene/sceneGraph';
 
-export default function primitivePreviewer(createThreePrimitiveGeometry, paramsToScales) {
+export default function primitivePreviewer(createThreePrimitiveGeometry, paramsToScales, shift) {
   return function previewer(ctx, initialParams) {
     let mDatum = initialParams.datum && ctx.services.cadRegistry.findDatum(initialParams.datum);
     let cs = mDatum ? mDatum.csys : CSys.ORIGIN;
@@ -24,14 +24,17 @@ export default function primitivePreviewer(createThreePrimitiveGeometry, paramsT
         dx*cs.x.z, dy*cs.y.z, dz*cs.z.z, o.z,
         0, 0, 0, 1
       );
+      
+      if (shift) {
+        auxMatrix.set(
+          1, 0, 0, shift[0],
+          0, 1, 0, shift[1],
+          0, 0, 1, shift[2],
+          0, 0, 0, 1
+        );
+        mesh.matrix.multiplyMatrices(mesh.matrix, auxMatrix);
+      }
 
-      auxMatrix.set(
-        1, 0, 0, 0.5,
-        0, 1, 0, 0.5,
-        0, 0, 1, 0.5,
-        0, 0, 0, 1
-      );
-      mesh.matrix.multiplyMatrices(mesh.matrix, auxMatrix);
       mesh.matrixWorldNeedsUpdate = true
     }
 
