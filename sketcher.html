@@ -6,6 +6,7 @@
   <link rel="shortcut icon" href="img/tgn.png" />
   <link rel="stylesheet" href="css/toolkit.css">
   <link rel="stylesheet" href="lib/font-awesome/css/font-awesome.min.css">
+  <script src="lib/verb.js"></script>
   <script src="static/sketcher.bundle.js"></script>
 </head>
 <body>
@@ -32,7 +33,8 @@
     --><button class="btn tbtn act-addEllipse" type="submit" value="">E</button><!--
     --><button class="btn tbtn act-addEllipticalArc" type="submit" value="">EA</button><!--
     --><button class="btn tbtn act-addBezierCurve sep" type="submit" value="">BZ</button><!--
-    --><button class="btn tbtn act-addRectangle sep" type="submit" value="">R</button><!--
+    --><button class="btn tbtn act-addRectangle" type="submit" value="">R</button><!--
+    --><button class="btn tbtn act-offsetTool sep" type="submit" value="">F</button><!--
     --><button class="btn tbtn act-addHDim" style="background-image: url(img/hdim.png);" type="submit" value=""></button><!--
     --><button class="btn tbtn act-addVDim" style="background-image: url(img/vdim.png);" type="submit" value=""></button><!--
     --><button class="btn tbtn act-addDim" style="background-image: url(img/dim.png);" type="submit" value=""></button><!--
@@ -43,8 +45,9 @@
 
     <div id="dock" class="panel b-right scroll" style="float: left; width: 245px; height: 100%;"></div>
     <div id="right-toolbar" class="panel b-left scroll" style="width: 50px; float: right; height: 100%; ">
-      <div style="width:50%; height: 2px"></div>  
+      <div style="width:50%; height: 2px"></div>
       <button class="btn rbtn act-coincident" style="background-image: url(img/coi.png);"></button>
+      <button class="btn rbtn act-mirrorConstraint" style="background-image: url(img/coi.png);"></button>
       <button class="btn rbtn act-verticalConstraint" style="background-image: url(img/vert.png);"></button>
       <button class="btn rbtn act-horizontalConstraint" style="background-image: url(img/hor.png);"></button>
       <button class="btn rbtn act-parallelConstraint" style="background-image: url(img/par.png);"></button>
@@ -64,7 +67,7 @@
       <div style="height: 10px;"></div>
       <button class="btn rbtn act-addFillet" style="background-image: url(img/vec/fillet.svg);"></button>
     </div>
-    <div id="viewer-container" style="background: black; overflow: hidden; height: 100%; position: relative">
+    <div id="viewer-container" style="background: #808080; overflow: hidden; height: 100%; position: relative">
       <div class="tool-hint" style="position: absolute; bottom: 5px; right: 5px;"></div>
       <canvas width="300" height="300" id="viewer"></canvas>
     </div>
