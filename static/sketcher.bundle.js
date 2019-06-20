@@ -64,7 +64,7 @@
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "37ed96bd14c0244297cf";
+/******/ 	var hotCurrentHash = "16c0fd504c7c026d2922";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -43740,7 +43740,7 @@ function (_Index) {
       var master;
 
       if (toMerge.length === 0) {
-        console.error("system has circular dependencies");
+        // console.error("system has circular dependencies");
         master = this.createSubSystem();
       } else {
         var _toMerge = toMerge;
@@ -43859,7 +43859,7 @@ function visitParams(constraint, skipAux, callback) {
   if (constraint.visitParams) {
     constraint.visitParams(callback);
   } else {
-    constraint.getSolveData().forEach(function (_ref) {
+    constraint.getSolveData(FAKE_RESOLVER).forEach(function (_ref) {
       var _ref2 = _slicedToArray(_ref, 2),
           sParams = _ref2[1];
 
@@ -43877,6 +43877,11 @@ var GOT_NOTHING = {
     return false;
   }
 };
+
+var FAKE_RESOLVER = function FAKE_RESOLVER() {
+  return 0;
+};
+
 var COUNTER = 0;
 
 /***/ }),
