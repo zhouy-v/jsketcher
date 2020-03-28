@@ -1,3 +1,4 @@
+- ![](../img/cad/datum32.png)[DATUM_CREATE.md](DATUM_CREATE.md "DATUM_CREATE.md")
 - ![](../img/cad/datum-move32.png)[DATUM_MOVE.md](DATUM_MOVE.md "DATUM_MOVE.md")
 - ![](../img/cad/datum-rotate32.png)[DATUM_ROTATE.md](DATUM_ROTATE.md "DATUM_ROTATE.md")
 - ![](../img/cad/plane32.png)[PLANE.md](PLANE.md "PLANE.md")
