@@ -1,4 +1,4 @@
-# ![](../img/cad/datum32.png)Datum Move
+# ![](../img/cad/datum-move32.png)Datum Move
 ![](img/move-datum.gif)
 
 
