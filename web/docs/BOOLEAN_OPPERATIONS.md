@@ -10,6 +10,7 @@ Union allows solids to be combined to create a new solid.
 
 # ![](../img/cad/subtract32.png)SUBTRACT
 Subtract allows one solid to be used as a cuttong tool for another sold. Usefull for making hole features.
+Selection A will have selection B removed from it.
 
 ![](img/bool-SUBTRACT.gif)
 
