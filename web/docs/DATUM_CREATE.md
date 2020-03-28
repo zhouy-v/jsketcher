@@ -1,7 +1,5 @@
-# Datum Create
+# ![](../img/cad/datum32.png)Datum Create
 ![](img/create-datum-dialog.png)
-
-Datiums consist of a point and 3 vectors defining a relative location and orientation. 
 
 Datiums consist of a point and 3 vectors defining a relative location and orientation. 
 
