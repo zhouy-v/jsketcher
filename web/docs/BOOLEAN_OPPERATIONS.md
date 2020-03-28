@@ -4,7 +4,7 @@ Boolean operations allow for solids to be used as tools to shape and modify othe
 
 
 # ![](../img/cad/union32.png)UNION
-Union allows solids to be combined to create a new solid
+Union allows solids to be combined to create a new solid.
 ![](img/bool-UNION.gif)
 
 # ![](../img/cad/subtract32.png)SUBTRACT
