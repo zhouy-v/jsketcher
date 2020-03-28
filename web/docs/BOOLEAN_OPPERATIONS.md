@@ -5,12 +5,15 @@ Boolean operations allow for solids to be used as tools to shape and modify othe
 
 # ![](../img/cad/union32.png)UNION
 Union allows solids to be combined to create a new solid.
+
 ![](img/bool-UNION.gif)
 
 # ![](../img/cad/subtract32.png)SUBTRACT
 Subtract allows one solid to be used as a cuttong tool for another sold. Usefull for making hole features.
+
 ![](img/bool-SUBTRACT.gif)
 
 # ![](../img/cad/intersection32.png)INTERSECTION
 Intersection allows for the creation of a new solid in the space where 2 exising solids overlap. 
+
 ![](img/bool-INTERSECTION.gif)
