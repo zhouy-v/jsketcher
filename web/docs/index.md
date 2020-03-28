@@ -1,5 +1,5 @@
 - ![](../img/cad/cone32.png)[CONE.md](CONE.md "CONE.md")
-- ![](../img/cad/cut2.png)[CUT.md](CUT.md "CUT.md")
+- ![](../img/cad/cut32.png)[CUT.md](CUT.md "CUT.md")
 - ![](../img/cad/cylinder32.png)[CYLINDER.md](CYLINDER.md "CYLINDER.md")
 - ![](../img/cad/datum-move32.png)[DATUM_MOVE.md](DATUM_MOVE.md "DATUM_MOVE.md")
 - ![](../img/cad/datum-rotate32.png)[DATUM_ROTATE.md](DATUM_ROTATE.md "DATUM_ROTATE.md")
