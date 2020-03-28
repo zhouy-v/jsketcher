@@ -1,4 +1,4 @@
-# ![](../img/cad/datum32.png)Datum Rotate
+# ![](../img/cad/datum-rotate32.png)Datum Rotate
 ![](img/rotate-datum.gif)
 
 
