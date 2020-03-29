@@ -2,7 +2,7 @@
 - ![](../img/cad/datum-move32.png)[DATUM_MOVE.md](DATUM_MOVE.md "DATUM_MOVE.md")
 - ![](../img/cad/datum-rotate32.png)[DATUM_ROTATE.md](DATUM_ROTATE.md "DATUM_ROTATE.md")
 - ![](../img/cad/plane32.png)[PLANE.md](PLANE.md "PLANE.md")
-- ![](../img/cad/face-edit96.png=32x32)[EditFace.md](EditFace.md "EditFace.md")
+- ![](../img/cad/face-edit96.png =32x32)[EditFace.md](EditFace.md "EditFace.md")
 - ![](../img/cad/revolve32.png)[REVOLVE.md](REVOLVE.md "REVOLVE.md")
 - ![](../img/cad/cut32.png)[CUT.md](CUT.md "CUT.md")
 - ![](../img/cad/fillet32.png)[FILLET.md](FILLET.md "FILLET.md")
