@@ -8,6 +8,6 @@ Datiums consist of a point and 3 vectors defining a relative location and orient
 
 The datium feature provides a point that can be used as the baisus for plane features or the origin point of a 3d primitive.
 
-The datium feature also provides 3 vectors. These vectors can be used for defining a direction of an extride/cur or the acces of a revolve feature. 
+The datium feature also provides 3 vectors. These vectors can be used for defining a direction of an extride/cut or the acces of a revolve feature. 
 
 
