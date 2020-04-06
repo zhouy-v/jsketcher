@@ -60,7 +60,8 @@ class Viewer {
       // this.createLayer("_construction_", Styles.CONSTRUCTION) 
     ];
     this.dimLayer = this.createLayer("_dim", Styles.DIM);
-    this.dimLayers = [this.dimLayer];
+    this.annotationLayer = this.createLayer("_annotations", Styles.ANNOTATIONS);
+    this.dimLayers = [this.dimLayer, this.annotationLayer];
     this.streams.dimScale.attach(() => this.refresh());
 
     this._workspace = [this.layers, this.dimLayers];
@@ -239,6 +240,9 @@ class Viewer {
     }
 
     this.__prevStyle = null;
+
+    this.interactiveScale = this.scale / this.retinaPxielRatio;
+    this.unscale = 1 / this.interactiveScale;
 
     this.__drawWorkspace(ctx, this._workspace, Viewer.__SKETCH_DRAW_PIPELINE);
     this.__drawWorkspace(ctx, this._serviceWorkspace, Viewer.__SIMPLE_DRAW_PIPELINE);
